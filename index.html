@@ -48,32 +48,32 @@
       <div class="deform-row">
         <label><input type="checkbox" id="crack-chk"> 균열</label>
         <div class="num-wrap">
-          <input type="number" id="crack-val" value="0" min="0" max="100" disabled />
-          <span class="unit">/ 100</span>
+          <input type="number" id="crack-val" value="0" min="0" max="1000" disabled />
+          <span class="unit">/ 1000</span>
           <span class="auto-badge" id="crack-auto">AUTO</span>
         </div>
       </div>
       <div class="deform-row">
         <label><input type="checkbox" id="collapse-chk"> 붕괴</label>
         <div class="num-wrap">
-          <input type="number" id="collapse-val" value="0" min="0" max="100" disabled />
-          <span class="unit">/ 100</span>
+          <input type="number" id="collapse-val" value="0" min="0" max="1000" disabled />
+          <span class="unit">/ 1000</span>
           <span class="auto-badge" id="collapse-auto">AUTO</span>
         </div>
       </div>
       <div class="deform-row">
         <label><input type="checkbox" id="sink-chk"> 침하</label>
         <div class="num-wrap">
-          <input type="number" id="sink-val" value="0" min="0" max="100" disabled />
-          <span class="unit">/ 100</span>
+          <input type="number" id="sink-val" value="0" min="0" max="1000" disabled />
+          <span class="unit">/ 1000</span>
           <span class="auto-badge" id="sink-auto">AUTO</span>
         </div>
       </div>
       <div class="deform-row">
         <label><input type="checkbox" id="age-chk"> 노화</label>
         <div class="num-wrap">
-          <input type="number" id="age-val" value="0" min="0" max="100" disabled />
-          <span class="unit">/ 100</span>
+          <input type="number" id="age-val" value="0" min="0" max="1000" disabled />
+          <span class="unit">/ 1000</span>
           <span class="auto-badge" id="age-auto">AUTO</span>
         </div>
       </div>
@@ -85,29 +85,29 @@
       <div class="deform-row">
         <label class="sim-target-label">균열</label>
         <div class="num-wrap">
-          <input type="number" id="sim-crack-target"    value="0" min="0" max="100" />
-          <span class="unit">/ 100</span>
+          <input type="number" id="sim-crack-target"    value="0" min="0" max="1000" />
+          <span class="unit">/ 1000</span>
         </div>
       </div>
       <div class="deform-row">
         <label class="sim-target-label">붕괴</label>
         <div class="num-wrap">
-          <input type="number" id="sim-collapse-target" value="0" min="0" max="100" />
-          <span class="unit">/ 100</span>
+          <input type="number" id="sim-collapse-target" value="0" min="0" max="1000" />
+          <span class="unit">/ 1000</span>
         </div>
       </div>
       <div class="deform-row">
         <label class="sim-target-label">침하</label>
         <div class="num-wrap">
-          <input type="number" id="sim-sink-target"     value="0" min="0" max="100" />
-          <span class="unit">/ 100</span>
+          <input type="number" id="sim-sink-target"     value="0" min="0" max="1000" />
+          <span class="unit">/ 1000</span>
         </div>
       </div>
       <div class="deform-row">
         <label class="sim-target-label">노화</label>
         <div class="num-wrap">
-          <input type="number" id="sim-age-target"      value="0" min="0" max="100" />
-          <span class="unit">/ 100</span>
+          <input type="number" id="sim-age-target"      value="0" min="0" max="1000" />
+          <span class="unit">/ 1000</span>
         </div>
       </div>
       <div class="sim-row" style="margin-top:10px;">
@@ -257,13 +257,12 @@ uniform float uModelMinY;\n` +
             transformed.z += cos(uTime * 13.0 + ht * 3.5) * shakeAmp * 0.6;`
           );
 
-        // ── Fragment Shader: dissolve + 색상 노화 ──
+        // ── Fragment Shader: 노화 색상 (조명 전) + dissolve ──
         shader.fragmentShader =
           `varying vec3 vWorldPos;
 uniform float uDissolve;
 uniform float uDarken;
 
-// ── Smooth value noise (FBM) ──────────────────────────────
 float _h(vec3 p) {
   p = fract(p * vec3(127.1, 311.7, 74.7));
   p += dot(p, p.yzx + 19.19);
@@ -272,48 +271,48 @@ float _h(vec3 p) {
 float _sn(vec3 p) {
   vec3 i = floor(p); vec3 f = fract(p);
   vec3 u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(mix(_h(i),              _h(i+vec3(1,0,0)), u.x),
-                 mix(_h(i+vec3(0,1,0)),  _h(i+vec3(1,1,0)), u.x), u.y),
-             mix(mix(_h(i+vec3(0,0,1)),  _h(i+vec3(1,0,1)), u.x),
-                 mix(_h(i+vec3(0,1,1)),  _h(i+vec3(1,1,1)), u.x), u.y), u.z);
+  return mix(mix(mix(_h(i),             _h(i+vec3(1,0,0)), u.x),
+                 mix(_h(i+vec3(0,1,0)), _h(i+vec3(1,1,0)), u.x), u.y),
+             mix(mix(_h(i+vec3(0,0,1)), _h(i+vec3(1,0,1)), u.x),
+                 mix(_h(i+vec3(0,1,1)), _h(i+vec3(1,1,1)), u.x), u.y), u.z);
 }
 float _fbm(vec3 p) {
   return _sn(p)*0.500 + _sn(p*2.03)*0.250 + _sn(p*4.11)*0.125 + _sn(p*8.17)*0.0625;
 }\n` +
           shader.fragmentShader
+            // ── 노화: 조명 계산 전 diffuseColor 수정 → 씬 조명을 자연스럽게 받음
+            .replace(
+              '#include <map_fragment>',
+              `#include <map_fragment>
+              float _ap = _fbm(vWorldPos * 2.2 + vec3(3.7, 1.2, 5.3));
+              // 1. 어두워짐
+              diffuseColor.rgb *= (1.0 - uDarken * 0.55);
+              // 2. 녹·이끼 색조 (linear 공간 — 조명 적용 전)
+              vec3 _agRust = vec3(0.38, 0.14, 0.02);
+              vec3 _agMold = vec3(0.04, 0.18, 0.03);
+              vec3 _agCol  = mix(_agRust, _agMold, _ap);
+              float _agMix = clamp(uDarken * (_ap * 0.7 + 0.3) * 0.70, 0.0, 1.0);
+              diffuseColor.rgb = mix(diffuseColor.rgb, _agCol, _agMix);
+              // 3. 흠집 — 밝은 콘크리트 노출면
+              float _scrN = _fbm(vWorldPos * 5.5 + vec3(5.1, 3.3, 1.7));
+              float _scrM = smoothstep(0.60, 0.42, _scrN) * clamp(uDarken * 3.5, 0.0, 1.0);
+              _scrM *= smoothstep(0.65, 0.0, uDissolve);
+              diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.52, 0.46, 0.35), _scrM * 0.65);`
+            )
+            // ── dissolve: FBM 기반 소실
             .replace(
               '#include <clipping_planes_fragment>',
               `#include <clipping_planes_fragment>
-              // 화면 공간 미분 → 모서리/실루엣 먼저 소실
-              float _eF  = clamp(length(fwidth(vWorldPos)) * 20.0, 0.0, 0.5);
-              // FBM 스무스 노이즈로 유기적 소실 패턴
               float _dn  = _fbm(vWorldPos * 1.5);
-              float _thr = uDissolve + _eF * 0.7;
-              // 소실 경계 밴드 (탄화 효과용)
-              float _eb  = smoothstep(_thr, _thr + 0.07, _dn);
+              float _thr = uDissolve;
+              float _eb  = smoothstep(_thr, _thr + 0.08, _dn);
               if (_dn < _thr) discard;`
             )
+            // ── 소실 경계 탄화 테두리
             .replace(
-              '#include <output_fragment>',
-              `#ifdef OPAQUE
-              diffuseColor.a = 1.0;
-              #endif
-              #ifdef USE_TRANSMISSION
-              diffuseColor.a *= material.transmissionAlpha;
-              #endif
-              // 위치 기반 노이즈로 불균일한 부식 패턴
-              float _ap = _fbm(vWorldPos * 1.8 + vec3(3.7, 1.2, 5.3));
-              // 녹/부식(주황-갈색) vs 이끼/곰팡이(어두운 녹색) 색조 혼합
-              vec3 _rust = vec3(0.22, 0.07, 0.01);
-              vec3 _mold = vec3(0.04, 0.07, 0.03);
-              vec3 _decay = mix(_rust, _mold, _ap);
-              // 위치마다 다른 어두워짐 강도
-              float _ds = clamp(uDarken * (0.5 + _ap * 0.9), 0.0, 0.90);
-              vec3 _col = outgoingLight * (1.0 - _ds * 0.75);
-              _col = mix(_col, _decay, clamp(uDarken * 0.65 * (0.3 + _ap * 0.7), 0.0, 1.0));
-              // 소실 경계: 탄화된 어두운 테두리
-              _col = mix(vec3(0.06, 0.03, 0.01), _col, _eb);
-              gl_FragColor = vec4(_col, diffuseColor.a);`
+              '#include <tonemapping_fragment>',
+              `#include <tonemapping_fragment>
+              gl_FragColor.rgb = mix(vec3(0.04, 0.02, 0.01), gl_FragColor.rgb, _eb);`
             );
       };
       mat.needsUpdate = true;
@@ -324,9 +323,11 @@ float _fbm(vec3 p) {
     let currentModel = null;
     let initCamPos = null, initCamTarget = null;
     let worldModelH = 2.0;
+    let meshMaterials = []; // 재질 원본 속성 저장 (노화 효과용)
 
     function placeModel(gltf) {
       if (currentModel) { scene.remove(currentModel); currentModel = null; window._mixer = null; }
+      meshMaterials = [];
       const model = gltf.scene;
       currentModel = model;
 
@@ -335,7 +336,10 @@ float _fbm(vec3 p) {
         child.castShadow = true;
         child.receiveShadow = true;
         (Array.isArray(child.material) ? child.material : [child.material])
-          .forEach(injectDeform);
+          .forEach(mat => {
+            injectDeform(mat);
+            meshMaterials.push({ mat, origRoughness: mat.roughness ?? 0.5 });
+          });
       });
 
       const box    = new THREE.Box3().setFromObject(model);
@@ -553,7 +557,8 @@ float _fbm(vec3 p) {
     // ── 시뮬레이션 상태 ──────────────────────────────────────────
     let simElapsed  = 0;      // 현재 경과 시간 (초)
     let simDuration = 30;     // 총 진행 시간 (초)
-    let simPlaying  = false;
+    let simPlaying   = false;
+    let simCompleted = false;  // 시뮬레이션 완료 후 값 고정 플래그
 
     const simPlayBtn  = document.getElementById('sim-play-btn');
     const simResetBtn = document.getElementById('sim-reset-btn');
@@ -564,10 +569,10 @@ float _fbm(vec3 p) {
 
     function simGetTargets() {
       return {
-        crack:    Math.min(100, Math.max(0, parseFloat(document.getElementById('sim-crack-target').value)    || 0)),
-        collapse: Math.min(100, Math.max(0, parseFloat(document.getElementById('sim-collapse-target').value) || 0)),
-        sink:     Math.min(100, Math.max(0, parseFloat(document.getElementById('sim-sink-target').value)     || 0)),
-        age:      Math.min(100, Math.max(0, parseFloat(document.getElementById('sim-age-target').value)      || 0)),
+        crack:    Math.min(1000, Math.max(0, parseFloat(document.getElementById('sim-crack-target').value)    || 0)),
+        collapse: Math.min(1000, Math.max(0, parseFloat(document.getElementById('sim-collapse-target').value) || 0)),
+        sink:     Math.min(1000, Math.max(0, parseFloat(document.getElementById('sim-sink-target').value)     || 0)),
+        age:      Math.min(1000, Math.max(0, parseFloat(document.getElementById('sim-age-target').value)      || 0)),
       };
     }
 
@@ -590,7 +595,7 @@ float _fbm(vec3 p) {
     }
 
     function simReset() {
-      simElapsed = 0; simPlaying = false;
+      simElapsed = 0; simPlaying = false; simCompleted = false;
       simPlayBtn.textContent = '▶ 재생';
       simPlayBtn.classList.remove('playing');
       simSetProgress(0);
@@ -613,7 +618,8 @@ float _fbm(vec3 p) {
     });
 
     simPlayBtn.addEventListener('click', () => {
-      if (simElapsed >= simDuration) simElapsed = 0; // 완료 후 재클릭 시 처음부터
+      if (simCompleted) { simReset(); return; } // 완료 상태에서 클릭 → 리셋
+      if (simElapsed >= simDuration) simElapsed = 0;
       simPlaying = !simPlaying;
       simPlayBtn.textContent = simPlaying ? '⏸ 일시정지' : '▶ 재생';
       simPlayBtn.classList.toggle('playing', simPlaying);
@@ -662,15 +668,26 @@ float _fbm(vec3 p) {
     });
     ageInput.addEventListener('input', () => {
       if (ageChk.checked) {
-        age = Math.max(0, Math.min(100, parseFloat(ageInput.value) || 0));
+        age = Math.max(0, Math.min(1000, parseFloat(ageInput.value) || 0));
         applyAge(age);
       }
     });
 
     function applyAge(a) {
-      const n = a / 100;
-      uDissolve.value = n * 0.9;
-      uDarken.value   = Math.min(1.0, n * 1.1);
+      const n = a / 1000;                           // 0–1
+      // 어두워짐: 처음부터 진행
+      uDarken.value = Math.min(1.0, n * 1.2);
+      // 소실: 40% 이후 시작, 나머지 60% 구간에서 0→0.9 진행
+      const dissolveN = Math.max(0, (n - 0.4) / 0.6);
+      uDissolve.value = dissolveN * 0.9;
+    }
+
+    // ── 재질 속성: roughness만 조정 (색상은 shader diffuseColor로 처리) ──
+    function updateAgeMaterials() {
+      const d = uDarken.value; // 0–1
+      meshMaterials.forEach(({ mat, origRoughness }) => {
+        mat.roughness = Math.min(1.0, origRoughness + d * 0.45);
+      });
     }
 
     // ── Reset ─────────────────────────────────────────────────────
@@ -713,6 +730,7 @@ float _fbm(vec3 p) {
       uTime.value += dt;
       tickParticles();
       updateAtmosphere();
+      updateAgeMaterials();
 
       if (simPlaying) {
         // ── 시뮬레이션 모드: 경과 시간 기반으로 효과 진행 ──
@@ -722,15 +740,16 @@ float _fbm(vec3 p) {
         simUpdateUI();
         if (simElapsed >= simDuration) {
           simPlaying = false;
-          simPlayBtn.textContent = '▶ 재생';
+          simCompleted = true;
+          simPlayBtn.textContent = '✓ 완료';
           simPlayBtn.classList.remove('playing');
         }
-      } else {
+      } else if (!simCompleted) {
         // ── 일반 모드: 날씨 강도 자동 lerp ──
         const tgt = calcAutoTargets();
         function autoLerp(chk, inp, aut, uVal, target, speed) {
           if (chk.checked) {
-            uVal.value = Math.max(0, Math.min(100, uVal.value));
+            uVal.value = Math.max(0, Math.min(1000, uVal.value));
           } else {
             uVal.value = THREE.MathUtils.lerp(uVal.value, target, speed);
             inp.value  = Math.round(uVal.value);
@@ -746,7 +765,7 @@ float _fbm(vec3 p) {
         // 노화: 시간에 따라 누적
         if (!ageChk.checked) {
           const rate = (AGE_RATE[weatherType] || 0) * intensity;
-          age = Math.min(100, age + rate * dt);
+          age = Math.min(1000, age + rate * dt);
           applyAge(age);
           ageInput.value = Math.round(age);
           ageAuto.style.display = weatherType !== 'none' ? 'inline' : 'none';
