@@ -1,0 +1,24 @@
+{
+  "name": "3dmodeltest",
+  "version": "1.0.0",
+  "description": "3d 모델 테스트입니다.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gwangminjun/3dModelTest.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/gwangminjun/3dModelTest/issues"
+  },
+  "homepage": "https://github.com/gwangminjun/3dModelTest#readme",
+  "dependencies": {
+    "three": "^0.169.0"
+  }
+}
