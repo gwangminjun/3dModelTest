@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>자연 훼손 시뮬레이터</title>
+  <title>건물 훼손 시뮬레이터</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -18,15 +18,15 @@
 
   <!-- Control Panel -->
   <div id="panel">
-    <h3>자연 훼손 시뮬레이터</h3>
+    <h3>건물 훼손 시뮬레이터</h3>
 
     <div class="sec">
-      <div class="sec-title">날씨 효과</div>
+      <div class="sec-title">날씨</div>
       <div class="rg">
-        <label><input type="radio" name="weather" value="none" checked> 없음</label>
-        <label><input type="radio" name="weather" value="rain"> 비</label>
-        <label><input type="radio" name="weather" value="wind"> 바람</label>
-        <label><input type="radio" name="weather" value="both"> 비+바람</label>
+        <label><input type="radio" name="weather" value="none"  checked> 없음</label>
+        <label><input type="radio" name="weather" value="rain">  비</label>
+        <label><input type="radio" name="weather" value="wind">  강풍</label>
+        <label><input type="radio" name="weather" value="quake"> 지진</label>
       </div>
     </div>
 
@@ -36,28 +36,98 @@
       <div class="range-labels"><span>약</span><span id="intensity-val">50</span><span>강</span></div>
     </div>
 
-    <div class="sec">
-      <div class="sec-title">변형 효과</div>
+    <!-- 모드 토글 -->
+    <div class="mode-toggle">
+      <button id="tab-manual" class="tab active">수동 변형</button>
+      <button id="tab-sim"    class="tab">시뮬레이션</button>
+    </div>
+
+    <!-- 수동 변형 패널 -->
+    <div id="panel-manual" class="sec mode-panel">
       <div class="deform-hint">미체크: 날씨 강도 자동 연동<br>체크: 수동 값 지정</div>
       <div class="deform-row">
-        <label><input type="checkbox" id="bend-chk"> 휘어짐</label>
+        <label><input type="checkbox" id="crack-chk"> 균열</label>
         <div class="num-wrap">
-          <input type="number" id="bend-val" value="0" min="0" max="100" disabled />
+          <input type="number" id="crack-val" value="0" min="0" max="100" disabled />
           <span class="unit">/ 100</span>
-          <span class="auto-badge" id="bend-auto">AUTO</span>
+          <span class="auto-badge" id="crack-auto">AUTO</span>
         </div>
       </div>
       <div class="deform-row">
-        <label><input type="checkbox" id="twist-chk"> 비틀림</label>
+        <label><input type="checkbox" id="collapse-chk"> 붕괴</label>
         <div class="num-wrap">
-          <input type="number" id="twist-val" value="0" min="0" max="100" disabled />
+          <input type="number" id="collapse-val" value="0" min="0" max="100" disabled />
           <span class="unit">/ 100</span>
-          <span class="auto-badge" id="twist-auto">AUTO</span>
+          <span class="auto-badge" id="collapse-auto">AUTO</span>
+        </div>
+      </div>
+      <div class="deform-row">
+        <label><input type="checkbox" id="sink-chk"> 침하</label>
+        <div class="num-wrap">
+          <input type="number" id="sink-val" value="0" min="0" max="100" disabled />
+          <span class="unit">/ 100</span>
+          <span class="auto-badge" id="sink-auto">AUTO</span>
+        </div>
+      </div>
+      <div class="deform-row">
+        <label><input type="checkbox" id="age-chk"> 노화</label>
+        <div class="num-wrap">
+          <input type="number" id="age-val" value="0" min="0" max="100" disabled />
+          <span class="unit">/ 100</span>
+          <span class="auto-badge" id="age-auto">AUTO</span>
         </div>
       </div>
     </div>
 
-    <button id="reset-btn">↺ 초기화</button>
+    <!-- 시뮬레이션 패널 -->
+    <div id="panel-sim" class="sec mode-panel" style="display:none;">
+      <div class="deform-hint">목표값까지 지정 시간 동안 진행</div>
+      <div class="deform-row">
+        <label class="sim-target-label">균열</label>
+        <div class="num-wrap">
+          <input type="number" id="sim-crack-target"    value="0" min="0" max="100" />
+          <span class="unit">/ 100</span>
+        </div>
+      </div>
+      <div class="deform-row">
+        <label class="sim-target-label">붕괴</label>
+        <div class="num-wrap">
+          <input type="number" id="sim-collapse-target" value="0" min="0" max="100" />
+          <span class="unit">/ 100</span>
+        </div>
+      </div>
+      <div class="deform-row">
+        <label class="sim-target-label">침하</label>
+        <div class="num-wrap">
+          <input type="number" id="sim-sink-target"     value="0" min="0" max="100" />
+          <span class="unit">/ 100</span>
+        </div>
+      </div>
+      <div class="deform-row">
+        <label class="sim-target-label">노화</label>
+        <div class="num-wrap">
+          <input type="number" id="sim-age-target"      value="0" min="0" max="100" />
+          <span class="unit">/ 100</span>
+        </div>
+      </div>
+      <div class="sim-row" style="margin-top:10px;">
+        <span class="sim-label">진행 시간</span>
+        <input type="number" id="sim-duration" value="30" min="1" max="3600" />
+        <span class="unit">초</span>
+      </div>
+      <div class="sim-progress-wrap">
+        <div id="sim-progress-bar"></div>
+      </div>
+      <div class="sim-time-display">
+        <span id="sim-time-cur">0</span> / <span id="sim-time-total">30</span>초
+      </div>
+      <div class="sim-controls">
+        <button id="sim-play-btn">▶ 재생</button>
+        <button id="sim-reset-btn">↺ 리셋</button>
+      </div>
+    </div>
+
+    <button id="reset-btn">↺ 전체 초기화</button>
   </div>
 
   <div id="hint">마우스: 회전 &nbsp;|&nbsp; 휠: 줌 &nbsp;|&nbsp; 우클릭: 이동</div>
@@ -119,37 +189,132 @@
     grid.material.transparent = true;
     scene.add(grid);
 
-    // ── Shared Deform Uniforms ────────────────────────────────────
-    // Both references are shared across all mesh shader instances.
-    // Changing .value here updates all meshes on the next render.
-    const uBend   = { value: 0.0 };   // 0–100 bend  strength
-    const uTwist  = { value: 0.0 };   // 0–100 twist strength
-    const uModelH = { value: 2.0 };   // scaled model height (set after load)
+    // ── Deform Uniforms ───────────────────────────────────────────
+    const uCrack     = { value: 0.0 };
+    const uCollapse  = { value: 0.0 };
+    const uSink      = { value: 0.0 };
+    const uShake     = { value: 0.0 };
+    const uTime      = { value: 0.0 };
+    const uModelH    = { value: 2.0 };
+    const uModelMinY = { value: 0.0 };
+    const uDissolve  = { value: 0.0 };  // 모서리부터 사라지는 dissolve (0–1)
+    const uDarken    = { value: 0.0 };  // 색상 어두워짐 (0–1)
 
     function injectDeform(mat) {
       mat.onBeforeCompile = (shader) => {
-        shader.uniforms.uBend   = uBend;
-        shader.uniforms.uTwist  = uTwist;
-        shader.uniforms.uModelH = uModelH;
+        // ── Uniforms ──
+        shader.uniforms.uCrack     = uCrack;
+        shader.uniforms.uCollapse  = uCollapse;
+        shader.uniforms.uSink      = uSink;
+        shader.uniforms.uShake     = uShake;
+        shader.uniforms.uTime      = uTime;
+        shader.uniforms.uModelH    = uModelH;
+        shader.uniforms.uModelMinY = uModelMinY;
+        shader.uniforms.uDissolve  = uDissolve;
+        shader.uniforms.uDarken    = uDarken;
 
+        // ── Vertex Shader: 변형 + vWorldPos 전달 ──
         shader.vertexShader =
-          'uniform float uBend;\nuniform float uTwist;\nuniform float uModelH;\n' +
+          `varying vec3 vWorldPos;
+uniform float uCrack;
+uniform float uCollapse;
+uniform float uSink;
+uniform float uShake;
+uniform float uTime;
+uniform float uModelH;
+uniform float uModelMinY;\n` +
           shader.vertexShader.replace(
             '#include <begin_vertex>',
             `#include <begin_vertex>
-            // Normalised height (0 = base, 1 = top)
-            float ht = clamp(transformed.y / max(uModelH, 0.001), 0.0, 1.5);
+            // 원본 월드 포지션 (dissolve 용 — 변형 전)
+            vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
 
-            // ── Bend: X displacement grows quadratically with height ──
-            transformed.x += uBend * 0.015 * ht * ht;
+            float ht = clamp((transformed.y - uModelMinY) / max(uModelH, 0.001), 0.0, 1.0);
 
-            // ── Twist: Y-axis rotation grows linearly with height ──
-            float angle = uTwist * 0.015 * ht;
-            float c = cos(angle); float s = sin(angle);
-            float nx = transformed.x * c - transformed.z * s;
-            float nz = transformed.x * s + transformed.z * c;
-            transformed.x = nx; transformed.z = nz;`
+            // ── 균열: 블록 단위 해시 노이즈 ──
+            float crackAmt = uCrack * 0.0018 * uModelH;
+            vec3 qp = floor(transformed * (6.0 / max(uModelH, 0.001)));
+            float hx = fract(sin(dot(qp, vec3(127.1, 311.7,  74.7))) * 43758.5);
+            float hy = fract(sin(dot(qp, vec3(269.5, 183.3, 246.1))) * 43758.5);
+            float hz = fract(sin(dot(qp, vec3( 42.1, 526.4, 190.3))) * 43758.5);
+            transformed += (vec3(hx, hy, hz) * 2.0 - 1.0) * crackAmt * (0.3 + ht * 0.7);
+
+            // ── 붕괴: 하중점 기반 구조 실패 + 층 압축 ──
+            float failHt    = 0.25;
+            float aboveFail = max(0.0, ht - failHt) / max(1.0 - failHt, 0.001);
+            float cn = uCollapse / 100.0;
+            transformed.x += cn * 0.55 * aboveFail * aboveFail * uModelH;
+            transformed.y -= cn * 0.22 * ht * ht * uModelH;
+            transformed.z += cn * 0.07 * sin(ht * 6.28318) * uModelH;
+
+            // ── 침하: 기초 침하 ──
+            float sn = uSink / 100.0;
+            transformed.y -= sn * 0.18 * uModelH * (1.0 - ht * 0.5);
+
+            // ── 지진 진동 ──
+            float shakeAmp = uShake * cn * 0.045 * uModelH;
+            transformed.x += sin(uTime * 15.0 + ht * 4.0) * shakeAmp;
+            transformed.z += cos(uTime * 13.0 + ht * 3.5) * shakeAmp * 0.6;`
           );
+
+        // ── Fragment Shader: dissolve + 색상 노화 ──
+        shader.fragmentShader =
+          `varying vec3 vWorldPos;
+uniform float uDissolve;
+uniform float uDarken;
+
+// ── Smooth value noise (FBM) ──────────────────────────────
+float _h(vec3 p) {
+  p = fract(p * vec3(127.1, 311.7, 74.7));
+  p += dot(p, p.yzx + 19.19);
+  return fract((p.x + p.y) * p.z);
+}
+float _sn(vec3 p) {
+  vec3 i = floor(p); vec3 f = fract(p);
+  vec3 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(_h(i),              _h(i+vec3(1,0,0)), u.x),
+                 mix(_h(i+vec3(0,1,0)),  _h(i+vec3(1,1,0)), u.x), u.y),
+             mix(mix(_h(i+vec3(0,0,1)),  _h(i+vec3(1,0,1)), u.x),
+                 mix(_h(i+vec3(0,1,1)),  _h(i+vec3(1,1,1)), u.x), u.y), u.z);
+}
+float _fbm(vec3 p) {
+  return _sn(p)*0.500 + _sn(p*2.03)*0.250 + _sn(p*4.11)*0.125 + _sn(p*8.17)*0.0625;
+}\n` +
+          shader.fragmentShader
+            .replace(
+              '#include <clipping_planes_fragment>',
+              `#include <clipping_planes_fragment>
+              // 화면 공간 미분 → 모서리/실루엣 먼저 소실
+              float _eF  = clamp(length(fwidth(vWorldPos)) * 20.0, 0.0, 0.5);
+              // FBM 스무스 노이즈로 유기적 소실 패턴
+              float _dn  = _fbm(vWorldPos * 1.5);
+              float _thr = uDissolve + _eF * 0.7;
+              // 소실 경계 밴드 (탄화 효과용)
+              float _eb  = smoothstep(_thr, _thr + 0.07, _dn);
+              if (_dn < _thr) discard;`
+            )
+            .replace(
+              '#include <output_fragment>',
+              `#ifdef OPAQUE
+              diffuseColor.a = 1.0;
+              #endif
+              #ifdef USE_TRANSMISSION
+              diffuseColor.a *= material.transmissionAlpha;
+              #endif
+              // 위치 기반 노이즈로 불균일한 부식 패턴
+              float _ap = _fbm(vWorldPos * 1.8 + vec3(3.7, 1.2, 5.3));
+              // 녹/부식(주황-갈색) vs 이끼/곰팡이(어두운 녹색) 색조 혼합
+              vec3 _rust = vec3(0.22, 0.07, 0.01);
+              vec3 _mold = vec3(0.04, 0.07, 0.03);
+              vec3 _decay = mix(_rust, _mold, _ap);
+              // 위치마다 다른 어두워짐 강도
+              float _ds = clamp(uDarken * (0.5 + _ap * 0.9), 0.0, 0.90);
+              vec3 _col = outgoingLight * (1.0 - _ds * 0.75);
+              _col = mix(_col, _decay, clamp(uDarken * 0.65 * (0.3 + _ap * 0.7), 0.0, 1.0));
+              // 소실 경계: 탄화된 어두운 테두리
+              _col = mix(vec3(0.06, 0.03, 0.01), _col, _eb);
+              gl_FragColor = vec4(_col, diffuseColor.a);`
+            );
       };
       mat.needsUpdate = true;
     }
@@ -158,6 +323,7 @@
     const loader = new GLTFLoader();
     let currentModel = null;
     let initCamPos = null, initCamTarget = null;
+    let worldModelH = 2.0;
 
     function placeModel(gltf) {
       if (currentModel) { scene.remove(currentModel); currentModel = null; window._mixer = null; }
@@ -179,10 +345,12 @@
       model.scale.setScalar(scale);
       model.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
 
-      uModelH.value = size.y * scale;
+      uModelMinY.value = box.min.y;
+      uModelH.value    = size.y;
+      worldModelH      = size.y * scale;
       scene.add(model);
 
-      const h = uModelH.value;
+      const h = worldModelH;
       initCamPos    = new THREE.Vector3(0, h * 0.8, h * 2.8);
       initCamTarget = new THREE.Vector3(0, h * 0.4, 0);
       camera.position.copy(initCamPos);
@@ -224,11 +392,11 @@
       if (f && (f.name.endsWith('.glb') || f.name.endsWith('.gltf'))) loadFromFile(f);
     });
 
-    // ── Weather Particles ─────────────────────────────────────────
+    // ── Particles ─────────────────────────────────────────────────
     const RANGE = 14, CEIL = 12;
     let weatherType = 'none', intensity = 0.5;
 
-    // Rain
+    // 비
     const RAIN_N = 4000;
     const rPos = new Float32Array(RAIN_N * 3), rSpd = new Float32Array(RAIN_N);
     for (let i = 0; i < RAIN_N; i++) {
@@ -244,7 +412,7 @@
     rainMesh.visible = false;
     scene.add(rainMesh);
 
-    // Wind (dust / debris)
+    // 강풍 먼지
     const WIND_N = 2000;
     const wPos = new Float32Array(WIND_N * 3), wSpd = new Float32Array(WIND_N), wPhs = new Float32Array(WIND_N);
     for (let i = 0; i < WIND_N; i++) {
@@ -261,19 +429,40 @@
     windMesh.visible = false;
     scene.add(windMesh);
 
-    function tickParticles() {
-      const hasRain = weatherType==='rain'||weatherType==='both';
-      const hasWind = weatherType==='wind'||weatherType==='both';
-      const sp = intensity, t = performance.now()*0.001;
-      const wAngle = Math.sin(t*0.25)*0.4 + 0.2;
+    // 지진 지면 먼지
+    const QDUST_N = 1500;
+    const qdPos = new Float32Array(QDUST_N * 3);
+    const qdVx  = new Float32Array(QDUST_N);
+    const qdVy  = new Float32Array(QDUST_N);
+    const qdPhs = new Float32Array(QDUST_N);
+    for (let i = 0; i < QDUST_N; i++) {
+      qdPos[i*3]   = (Math.random()-0.5)*8;
+      qdPos[i*3+1] = Math.random()*0.5;
+      qdPos[i*3+2] = (Math.random()-0.5)*8;
+      qdVx[i]  = (Math.random()-0.5)*0.03;
+      qdVy[i]  = 0.008 + Math.random()*0.025;
+      qdPhs[i] = Math.random()*Math.PI*2;
+    }
+    const qdustGeo  = new THREE.BufferGeometry();
+    qdustGeo.setAttribute('position', new THREE.BufferAttribute(qdPos, 3));
+    const qdustMat  = new THREE.PointsMaterial({ color: 0xaa9977, size: 0.10, transparent: true, opacity: 0.6, depthWrite: false });
+    const qdustMesh = new THREE.Points(qdustGeo, qdustMat);
+    qdustMesh.visible = false;
+    scene.add(qdustMesh);
 
-      rainMesh.visible = hasRain;
-      windMesh.visible = hasWind;
+    function tickParticles() {
+      const hasRain  = weatherType === 'rain';
+      const hasWind  = weatherType === 'wind';
+      const hasQuake = weatherType === 'quake';
+      const sp = intensity, t = performance.now()*0.001;
+
+      rainMesh.visible  = hasRain;
+      windMesh.visible  = hasWind;
+      qdustMesh.visible = hasQuake;
 
       if (hasRain) {
         for (let i = 0; i < RAIN_N; i++) {
           rPos[i*3+1] -= rSpd[i] * (sp*1.6 + 0.4);
-          if (hasWind) rPos[i*3] += wAngle * sp * 0.05;
           if (rPos[i*3+1] < -0.3) {
             rPos[i*3]   = (Math.random()-0.5)*RANGE*2;
             rPos[i*3+1] = CEIL + Math.random()*2;
@@ -297,43 +486,146 @@
         windGeo.attributes.position.needsUpdate = true;
         windMat.opacity = 0.3 + sp*0.4;
       }
+
+      if (hasQuake) {
+        for (let i = 0; i < QDUST_N; i++) {
+          qdPos[i*3]   += qdVx[i] + Math.sin(t*6 + qdPhs[i]) * 0.008 * sp;
+          qdPos[i*3+1] += qdVy[i] * sp;
+          if (qdPos[i*3+1] > 3.0) {
+            qdPos[i*3]   = (Math.random()-0.5)*8;
+            qdPos[i*3+1] = 0;
+            qdPos[i*3+2] = (Math.random()-0.5)*8;
+          }
+        }
+        qdustGeo.attributes.position.needsUpdate = true;
+        qdustMat.opacity = 0.3 + sp*0.5;
+      }
     }
 
-    // ── Auto Deform Targets from Weather + Intensity ───────────────
-    // 비    → bend 강  / twist 약
-    // 바람  → bend 중  / twist 강
-    // 비+바람 → 모두 강
+    // ── Auto Deform Targets ───────────────────────────────────────
     function calcAutoTargets() {
       const sp = intensity;
-      const hasRain = weatherType==='rain' || weatherType==='both';
-      const hasWind = weatherType==='wind' || weatherType==='both';
-      let bend = 0, twist = 0;
-      if (hasRain) bend  += sp * 58;
-      if (hasWind) { bend += sp * 22; twist += sp * 55; }
-      return { bend: Math.min(bend, 100), twist: Math.min(twist, 100) };
+      let crack = 0, collapse = 0, sink = 0;
+      if (weatherType === 'rain')  { crack += sp * 45; sink   += sp * 22; }
+      if (weatherType === 'wind')  { collapse += sp * 65; crack += sp * 20; }
+      if (weatherType === 'quake') { crack += sp * 75; collapse += sp * 80; sink += sp * 55; }
+      return {
+        crack:    Math.min(crack,    100),
+        collapse: Math.min(collapse, 100),
+        sink:     Math.min(sink,     100),
+      };
     }
 
     // ── Atmosphere ────────────────────────────────────────────────
     const clearBg = new THREE.Color(0x1a1a2e);
     const stormBg = new THREE.Color(0x07070f);
+    const quakeBg = new THREE.Color(0x100808);
 
     function updateAtmosphere() {
-      const stormy = weatherType !== 'none';
-      scene.background.lerp(stormy ? stormBg : clearBg, 0.03);
-      scene.fog.color.lerp(stormy ? stormBg : clearBg, 0.03);
+      const stormy   = weatherType !== 'none';
+      const isQuake  = weatherType === 'quake';
+      const targetBg = isQuake ? quakeBg : (stormy ? stormBg : clearBg);
+      scene.background.lerp(targetBg, 0.03);
+      scene.fog.color.lerp(targetBg, 0.03);
       scene.fog.density  = THREE.MathUtils.lerp(scene.fog.density,  stormy ? 0.038 : 0.018, 0.03);
       sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, stormy ? 0.50  : 1.5,   0.04);
       ambient.intensity  = THREE.MathUtils.lerp(ambient.intensity,  stormy ? 0.20  : 0.6,   0.04);
     }
 
     // ── UI References ─────────────────────────────────────────────
-    const bendChk    = document.getElementById('bend-chk');
-    const twistChk   = document.getElementById('twist-chk');
-    const bendInput  = document.getElementById('bend-val');
-    const twistInput = document.getElementById('twist-val');
-    const bendAuto   = document.getElementById('bend-auto');
-    const twistAuto  = document.getElementById('twist-auto');
+    const crackChk     = document.getElementById('crack-chk');
+    const collapseChk  = document.getElementById('collapse-chk');
+    const sinkChk      = document.getElementById('sink-chk');
+    const ageChk       = document.getElementById('age-chk');
+    const crackInput   = document.getElementById('crack-val');
+    const collapseInput = document.getElementById('collapse-val');
+    const sinkInput    = document.getElementById('sink-val');
+    const ageInput     = document.getElementById('age-val');
+    const crackAuto    = document.getElementById('crack-auto');
+    const collapseAuto = document.getElementById('collapse-auto');
+    const sinkAuto     = document.getElementById('sink-auto');
+    const ageAuto      = document.getElementById('age-auto');
     const intensitySlider = document.getElementById('intensity');
+
+    // 노화 누적값 (0–100)
+    let age = 0;
+
+    // ── 시뮬레이션 상태 ──────────────────────────────────────────
+    let simElapsed  = 0;      // 현재 경과 시간 (초)
+    let simDuration = 30;     // 총 진행 시간 (초)
+    let simPlaying  = false;
+
+    const simPlayBtn  = document.getElementById('sim-play-btn');
+    const simResetBtn = document.getElementById('sim-reset-btn');
+    const simDurInput = document.getElementById('sim-duration');
+    const simProgressBar  = document.getElementById('sim-progress-bar');
+    const simTimeCur  = document.getElementById('sim-time-cur');
+    const simTimeTotal = document.getElementById('sim-time-total');
+
+    function simGetTargets() {
+      return {
+        crack:    Math.min(100, Math.max(0, parseFloat(document.getElementById('sim-crack-target').value)    || 0)),
+        collapse: Math.min(100, Math.max(0, parseFloat(document.getElementById('sim-collapse-target').value) || 0)),
+        sink:     Math.min(100, Math.max(0, parseFloat(document.getElementById('sim-sink-target').value)     || 0)),
+        age:      Math.min(100, Math.max(0, parseFloat(document.getElementById('sim-age-target').value)      || 0)),
+      };
+    }
+
+    function simSetProgress(p) {
+      // ease-in-out cubic
+      const e = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p+2, 3)/2;
+      const tgt = simGetTargets();
+      uCrack.value    = tgt.crack    * e; crackInput.value    = Math.round(uCrack.value);
+      uCollapse.value = tgt.collapse * e; collapseInput.value = Math.round(uCollapse.value);
+      uSink.value     = tgt.sink     * e; sinkInput.value     = Math.round(uSink.value);
+      age = tgt.age * e; applyAge(age); ageInput.value = Math.round(age);
+      uShake.value = weatherType === 'quake' ? intensity * e : 0;
+    }
+
+    function simUpdateUI() {
+      const p = simDuration > 0 ? Math.min(simElapsed / simDuration, 1) : 0;
+      simProgressBar.style.width = (p * 100).toFixed(1) + '%';
+      simTimeCur.textContent  = Math.floor(simElapsed);
+      simTimeTotal.textContent = simDuration;
+    }
+
+    function simReset() {
+      simElapsed = 0; simPlaying = false;
+      simPlayBtn.textContent = '▶ 재생';
+      simPlayBtn.classList.remove('playing');
+      simSetProgress(0);
+      simUpdateUI();
+    }
+
+    // ── 모드 토글 ─────────────────────────────────────────────────
+    document.getElementById('tab-manual').addEventListener('click', () => {
+      document.getElementById('tab-manual').classList.add('active');
+      document.getElementById('tab-sim').classList.remove('active');
+      document.getElementById('panel-manual').style.display = '';
+      document.getElementById('panel-sim').style.display = 'none';
+      if (simPlaying) { simPlaying = false; simPlayBtn.textContent = '▶ 재생'; simPlayBtn.classList.remove('playing'); }
+    });
+    document.getElementById('tab-sim').addEventListener('click', () => {
+      document.getElementById('tab-sim').classList.add('active');
+      document.getElementById('tab-manual').classList.remove('active');
+      document.getElementById('panel-sim').style.display = '';
+      document.getElementById('panel-manual').style.display = 'none';
+    });
+
+    simPlayBtn.addEventListener('click', () => {
+      if (simElapsed >= simDuration) simElapsed = 0; // 완료 후 재클릭 시 처음부터
+      simPlaying = !simPlaying;
+      simPlayBtn.textContent = simPlaying ? '⏸ 일시정지' : '▶ 재생';
+      simPlayBtn.classList.toggle('playing', simPlaying);
+    });
+
+    simResetBtn.addEventListener('click', simReset);
+
+    simDurInput.addEventListener('change', () => {
+      simDuration = Math.max(1, parseInt(simDurInput.value) || 30);
+      simDurInput.value = simDuration;
+      simUpdateUI();
+    });
 
     // ── UI Events ─────────────────────────────────────────────────
     document.querySelectorAll('input[name="weather"]').forEach(r =>
@@ -345,40 +637,58 @@
       document.getElementById('intensity-val').textContent = e.target.value;
     });
 
-    bendChk.addEventListener('change', () => {
-      const manual = bendChk.checked;
-      bendInput.disabled   = !manual;
-      bendAuto.style.display = manual ? 'none' : 'inline';
-      if (manual) { bendInput.value = Math.round(uBend.value); uBend.value = parseFloat(bendInput.value)||0; }
+    function setupManual(chk, input, auto, uVal) {
+      chk.addEventListener('change', () => {
+        const manual = chk.checked;
+        input.disabled = !manual;
+        auto.style.display = manual ? 'none' : 'inline';
+        if (manual) { input.value = Math.round(uVal.value * 100); }
+      });
+      input.addEventListener('input', () => {
+        if (chk.checked) uVal.value = (parseFloat(input.value) || 0) / 100;
+      });
+    }
+
+    setupManual(crackChk,    crackInput,    crackAuto,    { get value() { return uCrack.value / 100; }, set value(v) { uCrack.value = v * 100; } });
+    setupManual(collapseChk, collapseInput, collapseAuto, { get value() { return uCollapse.value / 100; }, set value(v) { uCollapse.value = v * 100; } });
+    setupManual(sinkChk,     sinkInput,     sinkAuto,     { get value() { return uSink.value / 100; }, set value(v) { uSink.value = v * 100; } });
+
+    // 노화 수동 제어 (0–100 → uDissolve 0–0.9, uDarken 0–1)
+    ageChk.addEventListener('change', () => {
+      const manual = ageChk.checked;
+      ageInput.disabled = !manual;
+      ageAuto.style.display = manual ? 'none' : 'inline';
+      if (manual) ageInput.value = Math.round(age);
     });
-    twistChk.addEventListener('change', () => {
-      const manual = twistChk.checked;
-      twistInput.disabled   = !manual;
-      twistAuto.style.display = manual ? 'none' : 'inline';
-      if (manual) { twistInput.value = Math.round(uTwist.value); uTwist.value = parseFloat(twistInput.value)||0; }
+    ageInput.addEventListener('input', () => {
+      if (ageChk.checked) {
+        age = Math.max(0, Math.min(100, parseFloat(ageInput.value) || 0));
+        applyAge(age);
+      }
     });
 
-    bendInput.addEventListener('input',  () => { if (bendChk.checked)  uBend.value  = parseFloat(bendInput.value)  || 0; });
-    twistInput.addEventListener('input', () => { if (twistChk.checked) uTwist.value = parseFloat(twistInput.value) || 0; });
+    function applyAge(a) {
+      const n = a / 100;
+      uDissolve.value = n * 0.9;
+      uDarken.value   = Math.min(1.0, n * 1.1);
+    }
 
     // ── Reset ─────────────────────────────────────────────────────
     document.getElementById('reset-btn').addEventListener('click', () => {
-      // Weather
       document.querySelector('input[name="weather"][value="none"]').checked = true;
       weatherType = 'none';
-
-      // Intensity
       intensitySlider.value = 50; intensity = 0.5;
       document.getElementById('intensity-val').textContent = '50';
 
-      // Deform — uncheck, disable, reset values
-      bendChk.checked  = false; bendInput.disabled  = true; bendInput.value  = 0; bendAuto.style.display  = 'none';
-      twistChk.checked = false; twistInput.disabled = true; twistInput.value = 0; twistAuto.style.display = 'none';
+      [[crackChk, crackInput, crackAuto], [collapseChk, collapseInput, collapseAuto],
+       [sinkChk, sinkInput, sinkAuto], [ageChk, ageInput, ageAuto]]
+        .forEach(([chk, inp, aut]) => { chk.checked = false; inp.disabled = true; inp.value = 0; aut.style.display = 'none'; });
 
-      // Uniforms (lerp back to 0 smoothly via auto path)
-      uBend.value = 0; uTwist.value = 0;
+      uCrack.value = 0; uCollapse.value = 0; uSink.value = 0;
+      uShake.value = 0; uDissolve.value = 0; uDarken.value = 0;
+      age = 0;
+      simReset();
 
-      // Camera
       if (initCamPos) { camera.position.copy(initCamPos); controls.target.copy(initCamTarget); controls.update(); }
     });
 
@@ -391,30 +701,56 @@
 
     // ── Render Loop ───────────────────────────────────────────────
     const clock = new THREE.Clock();
+
+    // 날씨별 노화 속도 (units/sec at intensity=1)
+    const AGE_RATE = { none: 0, rain: 3, wind: 4, quake: 7 };
+
     (function animate() {
       requestAnimationFrame(animate);
       const dt = clock.getDelta();
       if (window._mixer) window._mixer.update(dt);
       controls.update();
+      uTime.value += dt;
       tickParticles();
       updateAtmosphere();
 
-      // Deform: manual override OR smooth auto from weather intensity
-      const tgt = calcAutoTargets();
-      if (bendChk.checked) {
-        // manual — value already set via input event, just clamp
-        uBend.value = Math.max(0, Math.min(100, uBend.value));
+      if (simPlaying) {
+        // ── 시뮬레이션 모드: 경과 시간 기반으로 효과 진행 ──
+        simElapsed = Math.min(simElapsed + dt, simDuration);
+        const p = simElapsed / simDuration;
+        simSetProgress(p);
+        simUpdateUI();
+        if (simElapsed >= simDuration) {
+          simPlaying = false;
+          simPlayBtn.textContent = '▶ 재생';
+          simPlayBtn.classList.remove('playing');
+        }
       } else {
-        uBend.value = THREE.MathUtils.lerp(uBend.value, tgt.bend,  0.025);
-        bendInput.value = Math.round(uBend.value);
-        bendAuto.style.display = weatherType !== 'none' ? 'inline' : 'none';
-      }
-      if (twistChk.checked) {
-        uTwist.value = Math.max(0, Math.min(100, uTwist.value));
-      } else {
-        uTwist.value = THREE.MathUtils.lerp(uTwist.value, tgt.twist, 0.025);
-        twistInput.value = Math.round(uTwist.value);
-        twistAuto.style.display = weatherType !== 'none' ? 'inline' : 'none';
+        // ── 일반 모드: 날씨 강도 자동 lerp ──
+        const tgt = calcAutoTargets();
+        function autoLerp(chk, inp, aut, uVal, target, speed) {
+          if (chk.checked) {
+            uVal.value = Math.max(0, Math.min(100, uVal.value));
+          } else {
+            uVal.value = THREE.MathUtils.lerp(uVal.value, target, speed);
+            inp.value  = Math.round(uVal.value);
+            aut.style.display = weatherType !== 'none' ? 'inline' : 'none';
+          }
+        }
+        autoLerp(crackChk,    crackInput,    crackAuto,    uCrack,    tgt.crack,    0.020);
+        autoLerp(collapseChk, collapseInput, collapseAuto, uCollapse, tgt.collapse, 0.015);
+        autoLerp(sinkChk,     sinkInput,     sinkAuto,     uSink,     tgt.sink,     0.015);
+
+        uShake.value = THREE.MathUtils.lerp(uShake.value, weatherType === 'quake' ? intensity : 0, 0.05);
+
+        // 노화: 시간에 따라 누적
+        if (!ageChk.checked) {
+          const rate = (AGE_RATE[weatherType] || 0) * intensity;
+          age = Math.min(100, age + rate * dt);
+          applyAge(age);
+          ageInput.value = Math.round(age);
+          ageAuto.style.display = weatherType !== 'none' ? 'inline' : 'none';
+        }
       }
 
       renderer.render(scene, camera);

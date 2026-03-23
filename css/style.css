@@ -55,6 +55,60 @@ input[type=range] { width: 100%; accent-color: #6366f1; margin-top: 4px; cursor:
   border-radius: 4px; padding: 1px 5px; display: none;
 }
 
+/* mode toggle */
+.mode-toggle {
+  display: flex; gap: 0; margin-bottom: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px; overflow: hidden;
+}
+.mode-toggle .tab {
+  flex: 1; padding: 7px 0; font-size: 12px; cursor: pointer;
+  background: transparent; border: none; color: #555;
+  transition: background 0.15s, color 0.15s;
+}
+.mode-toggle .tab.active {
+  background: rgba(99,102,241,0.35);
+  color: #e0e7ff; font-weight: 600;
+}
+.mode-toggle .tab:not(.active):hover { background: rgba(255,255,255,0.06); color: #888; }
+
+/* simulation */
+.sim-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.sim-label { font-size: 12px; color: #999; flex-shrink: 0; }
+.sim-target-label {
+  display: flex; align-items: center;
+  font-size: 12px; color: #999; min-width: 70px; cursor: default;
+}
+.sim-row input[type=number] {
+  width: 56px; background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.13); border-radius: 6px;
+  color: #fff; padding: 3px 7px; font-size: 12px; outline: none;
+}
+.sim-row input[type=number]:focus { border-color: #6366f1; }
+.sim-progress-wrap {
+  background: rgba(255,255,255,0.08); border-radius: 4px;
+  height: 6px; margin-bottom: 5px; overflow: hidden;
+}
+#sim-progress-bar {
+  height: 100%; width: 0%; background: linear-gradient(90deg, #4f46e5, #818cf8);
+  border-radius: 4px; transition: width 0.1s linear;
+}
+.sim-time-display {
+  font-size: 10px; color: #555; text-align: center; margin-bottom: 8px;
+}
+.sim-controls { display: flex; gap: 6px; }
+.sim-controls button {
+  flex: 1; padding: 7px 4px;
+  background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.35);
+  border-radius: 8px; color: #a5b4fc; font-size: 12px; cursor: pointer;
+  transition: background 0.15s;
+}
+.sim-controls button:hover  { background: rgba(99,102,241,0.32); }
+.sim-controls button.playing { background: rgba(99,102,241,0.40); border-color: #6366f1; }
+
 /* reset */
 #reset-btn {
   width: 100%; padding: 8px; margin-top: 2px;
