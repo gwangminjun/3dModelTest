@@ -1,163 +1,255 @@
+/**
+ * UIController.js
+ *
+ * 사용자 인터페이스(UI)와 3D 씬의 변형/날씨 시스템을 연결하는 컨트롤러 클래스.
+ * 수동 제어(Manual)와 시뮬레이션(Simulation) 두 가지 탭을 관리하며,
+ * 날씨/강도 설정, 수동 변형 수치 입력, 전체 리셋 기능을 담당한다.
+ *
+ * 주요 역할:
+ * - 날씨 라디오 버튼 및 강도 슬라이더 이벤트 처리
+ * - 수동 모드에서 균열/붕괴/침하/노화 수치 입력 처리
+ * - 자동 모드(날씨 기반)에서 매 프레임 목표값으로 부드럽게 lerp
+ * - 탭 전환 (수동 패널 ↔ 시뮬레이션 패널)
+ * - 리셋 버튼: 모든 상태 초기화
+ */
+
 import * as THREE from 'three';
 
 export class UIController {
+  /**
+   * @param {object} deps - 의존성 객체
+   * @param {DeformManager} deps.deformManager - 변형 유니폼 제어
+   * @param {SimulationController} deps.simController - 시뮬레이션 재생 제어
+   * @param {WeatherController} deps.weatherController - 날씨 대기 제어
+   * @param {ModelLoader} deps.modelLoader - 카메라 리셋용 모델 로더
+   */
   constructor({ deformManager, simController, weatherController, modelLoader }) {
     this.dm  = deformManager;
     this.sim = simController;
     this.wc  = weatherController;
     this.ml  = modelLoader;
 
-    this._crackChk    = document.getElementById('crack-chk');
-    this._collapseChk = document.getElementById('collapse-chk');
-    this._sinkChk     = document.getElementById('sink-chk');
-    this._ageChk      = document.getElementById('age-chk');
-    this._crackInput   = document.getElementById('crack-val');
-    this._collapseInput = document.getElementById('collapse-val');
-    this._sinkInput    = document.getElementById('sink-val');
-    this._ageInput     = document.getElementById('age-val');
-    this._crackAuto    = document.getElementById('crack-auto');
-    this._collapseAuto = document.getElementById('collapse-auto');
-    this._sinkAuto     = document.getElementById('sink-auto');
-    this._ageAuto      = document.getElementById('age-auto');
-    this._intensitySlider = document.getElementById('intensity');
+    // ── 수동 제어 UI 요소 참조 ──────────────────────────────────
+    this._crackChk    = document.getElementById('crack-chk');     // 균열 수동 제어 체크박스
+    this._collapseChk = document.getElementById('collapse-chk');  // 붕괴 수동 제어 체크박스
+    this._sinkChk     = document.getElementById('sink-chk');      // 침하 수동 제어 체크박스
+    this._ageChk      = document.getElementById('age-chk');       // 노화 수동 제어 체크박스
+    this._crackInput   = document.getElementById('crack-val');    // 균열 수치 입력
+    this._collapseInput = document.getElementById('collapse-val'); // 붕괴 수치 입력
+    this._sinkInput    = document.getElementById('sink-val');     // 침하 수치 입력
+    this._ageInput     = document.getElementById('age-val');      // 노화 수치 입력
+    this._crackAuto    = document.getElementById('crack-auto');   // 균열 자동 배지
+    this._collapseAuto = document.getElementById('collapse-auto'); // 붕괴 자동 배지
+    this._sinkAuto     = document.getElementById('sink-auto');    // 침하 자동 배지
+    this._ageAuto      = document.getElementById('age-auto');     // 노화 자동 배지
+    this._intensitySlider = document.getElementById('intensity'); // 날씨 강도 슬라이더
 
+    // ── 날씨별 노화 누적 속도 (초당 노화 수치 증가량) ─────────────
     this._AGE_RATE = { none: 0, rain: 3, wind: 4, quake: 7 };
 
-    this._bindWeather();
-    this._bindManual();
-    this._bindTabs();
-    this._bindReset();
+    // ── 이벤트 바인딩 ────────────────────────────────────────────
+    this._bindWeather(); // 날씨 설정 이벤트
+    this._bindManual();  // 수동 변형 이벤트
+    this._bindTabs();    // 탭 전환 이벤트
+    this._bindReset();   // 리셋 버튼 이벤트
   }
 
+  /**
+   * 날씨 라디오 버튼과 강도 슬라이더에 이벤트 리스너를 등록한다.
+   * WeatherController와 SimulationController에 날씨 상태를 동기화한다.
+   */
   _bindWeather() {
+    // 날씨 타입 라디오 버튼 변경 시
     document.querySelectorAll('input[name="weather"]').forEach(r =>
       r.addEventListener('change', e => {
-        this.wc.weatherType  = e.target.value;
-        this.sim.weatherType = e.target.value;
+        this.wc.weatherType  = e.target.value; // 대기 컨트롤러 업데이트
+        this.sim.weatherType = e.target.value; // 시뮬레이션 컨트롤러 업데이트
       })
     );
+    // 강도 슬라이더 값 변경 시
     this._intensitySlider.addEventListener('input', e => {
-      const v = e.target.value / 100;
+      const v = e.target.value / 100; // 0 ~ 100 → 0.0 ~ 1.0
       this.wc.intensity  = v;
       this.sim.intensity = v;
-      document.getElementById('intensity-val').textContent = e.target.value;
+      document.getElementById('intensity-val').textContent = e.target.value; // 수치 표시
     });
   }
 
+  /**
+   * 수동 변형 체크박스와 수치 입력 요소에 이벤트를 바인딩한다.
+   * 각 변형 항목(균열, 붕괴, 침하)은 공통 헬퍼 메서드로 처리하고,
+   * 노화(Age)는 applyAge() 메서드 특성상 별도로 처리한다.
+   */
   _bindManual() {
+    // 균열(Crack) 수동 제어
     this._setupManualInput(
       this._crackChk, this._crackInput, this._crackAuto,
-      () => this.dm.uCrack.value / 100,
-      v  => { this.dm.uCrack.value = v * 100; }
+      () => this.dm.uCrack.value / 100,    // 현재 값 읽기 (0 ~ 1)
+      v  => { this.dm.uCrack.value = v * 100; } // 값 설정 (0 ~ 100)
     );
+    // 붕괴(Collapse) 수동 제어
     this._setupManualInput(
       this._collapseChk, this._collapseInput, this._collapseAuto,
       () => this.dm.uCollapse.value / 100,
       v  => { this.dm.uCollapse.value = v * 100; }
     );
+    // 침하(Sink) 수동 제어
     this._setupManualInput(
       this._sinkChk, this._sinkInput, this._sinkAuto,
       () => this.dm.uSink.value / 100,
       v  => { this.dm.uSink.value = v * 100; }
     );
 
+    // 노화(Age) 수동 제어 (applyAge를 통해 다중 유니폼 갱신)
     this._ageChk.addEventListener('change', () => {
       const manual = this._ageChk.checked;
-      this._ageInput.disabled = !manual;
-      this._ageAuto.style.display = manual ? 'none' : 'inline';
-      if (manual) this._ageInput.value = Math.round(this.dm.age);
+      this._ageInput.disabled = !manual;                          // 수동 모드일 때만 입력 활성화
+      this._ageAuto.style.display = manual ? 'none' : 'inline';  // 자동 배지 숨김/표시
+      if (manual) this._ageInput.value = Math.round(this.dm.age); // 현재 값으로 초기화
     });
     this._ageInput.addEventListener('input', () => {
       if (this._ageChk.checked) {
+        // 수동 모드에서 입력 값을 0 ~ 1000으로 제한하여 적용
         this.dm.applyAge(Math.max(0, Math.min(1000, parseFloat(this._ageInput.value) || 0)));
       }
     });
   }
 
+  /**
+   * 변형 수치의 수동/자동 모드 전환과 입력 이벤트를 설정하는 공통 헬퍼.
+   * 체크박스가 ON이면 수동 입력 활성화, OFF이면 자동 lerp 모드.
+   * @param {HTMLInputElement} chk - 수동 모드 체크박스
+   * @param {HTMLInputElement} input - 수치 입력 요소
+   * @param {HTMLElement} autoBadge - 자동 모드 배지 요소
+   * @param {Function} getVal - 현재 정규화된 값을 반환하는 함수 (0 ~ 1)
+   * @param {Function} setVal - 정규화된 값을 설정하는 함수 (0 ~ 1)
+   */
   _setupManualInput(chk, input, autoBadge, getVal, setVal) {
+    // 체크박스 상태 변경 시
     chk.addEventListener('change', () => {
       const manual = chk.checked;
-      input.disabled = !manual;
-      autoBadge.style.display = manual ? 'none' : 'inline';
-      if (manual) input.value = Math.round(getVal() * 100);
+      input.disabled = !manual;                              // 수동 모드에서만 입력 가능
+      autoBadge.style.display = manual ? 'none' : 'inline'; // 자동 배지 토글
+      if (manual) input.value = Math.round(getVal() * 100); // 현재 값 표시
     });
+    // 수치 입력 변경 시 (수동 모드에서만 적용)
     input.addEventListener('input', () => {
       if (chk.checked) setVal((parseFloat(input.value) || 0) / 100);
     });
   }
 
+  /**
+   * 수동/시뮬레이션 탭 전환 이벤트를 등록한다.
+   * 수동 탭으로 전환 시 진행 중인 시뮬레이션을 일시정지한다.
+   */
   _bindTabs() {
+    // 수동(Manual) 탭 클릭
     document.getElementById('tab-manual').addEventListener('click', () => {
       document.getElementById('tab-manual').classList.add('active');
       document.getElementById('tab-sim').classList.remove('active');
-      document.getElementById('panel-manual').style.display = '';
-      document.getElementById('panel-sim').style.display    = 'none';
-      this.sim.pause();
+      document.getElementById('panel-manual').style.display = ''; // 수동 패널 표시
+      document.getElementById('panel-sim').style.display    = 'none'; // 시뮬레이션 패널 숨김
+      this.sim.pause(); // 탭 전환 시 시뮬레이션 일시정지
     });
+    // 시뮬레이션(Simulation) 탭 클릭
     document.getElementById('tab-sim').addEventListener('click', () => {
       document.getElementById('tab-sim').classList.add('active');
       document.getElementById('tab-manual').classList.remove('active');
-      document.getElementById('panel-sim').style.display    = '';
-      document.getElementById('panel-manual').style.display = 'none';
+      document.getElementById('panel-sim').style.display    = ''; // 시뮬레이션 패널 표시
+      document.getElementById('panel-manual').style.display = 'none'; // 수동 패널 숨김
     });
   }
 
+  /**
+   * 전체 리셋 버튼에 이벤트를 등록한다.
+   * 날씨, 강도, 모든 변형 수치, 시뮬레이션 상태, 카메라를 초기화한다.
+   */
   _bindReset() {
     document.getElementById('reset-btn').addEventListener('click', () => {
+      // 날씨를 '없음'으로 초기화
       document.querySelector('input[name="weather"][value="none"]').checked = true;
       this.wc.weatherType  = 'none';
       this.sim.weatherType = 'none';
+      // 강도를 기본값(50%)으로 초기화
       this._intensitySlider.value = 50;
       this.wc.intensity  = 0.5;
       this.sim.intensity = 0.5;
       document.getElementById('intensity-val').textContent = '50';
 
+      // 모든 수동 제어 체크박스와 입력값 초기화
       [
         [this._crackChk,    this._crackInput,    this._crackAuto],
         [this._collapseChk, this._collapseInput, this._collapseAuto],
         [this._sinkChk,     this._sinkInput,     this._sinkAuto],
         [this._ageChk,      this._ageInput,      this._ageAuto],
       ].forEach(([chk, inp, aut]) => {
-        chk.checked = false; inp.disabled = true; inp.value = 0; aut.style.display = 'none';
+        chk.checked = false;        // 체크박스 해제
+        inp.disabled = true;        // 입력 비활성화
+        inp.value = 0;              // 수치 초기화
+        aut.style.display = 'none'; // 자동 배지 숨김
       });
 
-      this.dm.reset();
-      this.sim.reset();
-      this.ml.resetCamera();
+      this.dm.reset();         // 변형 유니폼 초기화
+      this.sim.reset();        // 시뮬레이션 상태 초기화
+      this.ml.resetCamera();   // 카메라 위치 초기화
     });
   }
 
-  // animate 루프에서 매 프레임 호출 — 자동 lerp 및 노화 누적
+  /**
+   * animate 루프에서 매 프레임 호출된다.
+   * 자동 모드(날씨 기반)에서 변형 수치를 목표값으로 부드럽게 lerp하고,
+   * 날씨에 따른 노화를 실시간으로 누적한다.
+   * 시뮬레이션 재생 중이거나 완료 상태에서는 호출되지 않는다.
+   * @param {number} dt - 이전 프레임과의 시간 차이 (초)
+   */
   tickAutoDeform(dt) {
     const { weatherType, intensity } = this.wc;
-    const tgt = this.wc.calcAutoTargets();
+    const tgt = this.wc.calcAutoTargets(); // 현재 날씨에 따른 목표값 계산
 
+    // 각 변형 항목을 목표값으로 부드럽게 수렴 (자동 모드일 때만)
     this._autoLerp(this._crackChk,    this._crackInput,    this._crackAuto,    this.dm.uCrack,    tgt.crack,    0.020, weatherType);
     this._autoLerp(this._collapseChk, this._collapseInput, this._collapseAuto, this.dm.uCollapse, tgt.collapse, 0.015, weatherType);
     this._autoLerp(this._sinkChk,     this._sinkInput,     this._sinkAuto,     this.dm.uSink,     tgt.sink,     0.015, weatherType);
 
+    // 흔들림: 지진 날씨일 때 강도로 수렴, 아닐 때 0으로 수렴
     this.dm.uShake.value = THREE.MathUtils.lerp(
       this.dm.uShake.value,
       weatherType === 'quake' ? intensity : 0,
       0.05
     );
 
+    // 노화 자동 누적 (수동 모드가 아닐 때만)
     if (!this._ageChk.checked) {
-      const rate   = (this._AGE_RATE[weatherType] || 0) * intensity;
-      const newAge = Math.min(1000, this.dm.age + rate * dt);
+      const rate   = (this._AGE_RATE[weatherType] || 0) * intensity; // 초당 노화 증가량
+      const newAge = Math.min(1000, this.dm.age + rate * dt);         // 최대 1000
       this.dm.applyAge(newAge);
       this._ageInput.value = Math.round(this.dm.age);
+      // 날씨가 있을 때만 자동 배지 표시
       this._ageAuto.style.display = weatherType !== 'none' ? 'inline' : 'none';
     }
   }
 
+  /**
+   * 단일 변형 항목의 자동 lerp를 수행하는 내부 헬퍼.
+   * 수동 모드(체크박스 ON)일 때는 값을 유지하고 UI만 갱신한다.
+   * 자동 모드(체크박스 OFF)일 때는 목표값으로 lerp한다.
+   * @param {HTMLInputElement} chk - 수동 모드 체크박스
+   * @param {HTMLInputElement} inp - 수치 입력 요소
+   * @param {HTMLElement} aut - 자동 배지 요소
+   * @param {{ value: number }} uVal - 유니폼 값 객체 (참조)
+   * @param {number} target - 자동 모드에서의 목표값
+   * @param {number} speed - lerp 속도 (0 ~ 1)
+   * @param {string} weatherType - 현재 날씨 타입
+   */
   _autoLerp(chk, inp, aut, uVal, target, speed, weatherType) {
     if (chk.checked) {
+      // 수동 모드: 값을 0 ~ 1000 범위로 제한만 함
       uVal.value = Math.max(0, Math.min(1000, uVal.value));
     } else {
+      // 자동 모드: 목표값으로 부드럽게 수렴
       uVal.value = THREE.MathUtils.lerp(uVal.value, target, speed);
-      inp.value  = Math.round(uVal.value);
-      aut.style.display = weatherType !== 'none' ? 'inline' : 'none';
+      inp.value  = Math.round(uVal.value); // UI 수치 업데이트
+      aut.style.display = weatherType !== 'none' ? 'inline' : 'none'; // 자동 배지 표시
     }
   }
 }
