@@ -24,7 +24,8 @@ export class SimulationController {
     this.playing     = false;        // 재생 중 여부
     this.completed   = false;        // 시뮬레이션 완료 여부
     this.weatherType = 'none';       // 현재 날씨 타입 (흔들림 효과 계산용)
-    this.intensity   = 0.5;         // 날씨 강도 (0.0 ~ 1.0)
+    this.intensity   = 0.5;          // 날씨 강도 (0.0 ~ 1.0)
+    this.speed       = 1.0;          // 재생 배속 (0.5 / 1 / 2 / 4)
 
     // ── UI 요소 참조 ────────────────────────────────────────────
     this._playBtn     = document.getElementById('sim-play-btn');
@@ -58,6 +59,15 @@ export class SimulationController {
       this.duration = Math.max(1, parseInt(this._durInput.value) || 30); // 최소 1초
       this._durInput.value = this.duration;
       this._updateUI();
+    });
+
+    // 배속 버튼
+    document.querySelectorAll('.speed-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.speed = parseFloat(btn.dataset.speed);
+        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
     });
   }
 
@@ -139,7 +149,7 @@ export class SimulationController {
    */
   tick(dt) {
     if (!this.playing) return; // 재생 중이 아니면 무시
-    this.elapsed = Math.min(this.elapsed + dt, this.duration); // 최대 duration까지 증가
+    this.elapsed = Math.min(this.elapsed + dt * this.speed, this.duration); // 배속 적용하여 최대 duration까지 증가
     this.setProgress(this.elapsed / this.duration);            // 진행률에 따른 변형 적용
     this._updateUI();
     // 시뮬레이션 완료 처리

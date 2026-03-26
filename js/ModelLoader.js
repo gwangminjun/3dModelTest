@@ -165,6 +165,18 @@ export class ModelLoader {
       window._mixer = mixer; // 전역에서 애니메이션 업데이트 가능하도록 저장
     }
     document.getElementById('loading').style.display = 'none'; // 로딩 화면 숨김
+
+    // ── 모델 정보 표시 ────────────────────────────────────────────
+    let meshCount = 0, vertexCount = 0;
+    model.traverse(child => {
+      if (!child.isMesh) return;
+      meshCount++;
+      vertexCount += child.geometry.attributes.position?.count ?? 0;
+    });
+    const infoEl = document.getElementById('model-info');
+    if (infoEl) {
+      infoEl.textContent = `메시 ${meshCount}개 · 버텍스 ${vertexCount.toLocaleString()}개`;
+    }
   }
 
   /**

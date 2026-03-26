@@ -12,8 +12,13 @@ canvas { display: block; }
 }
 #panel h3 {
   color: #fff; font-size: 13px; font-weight: 600;
-  margin-bottom: 14px; padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.12); letter-spacing: 0.03em;
+  margin-bottom: 6px;
+  letter-spacing: 0.03em;
+}
+#model-info {
+  font-size: 10px; color: #444; margin-bottom: 10px;
+  padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.12);
+  min-height: 14px;
 }
 .sec { margin-bottom: 15px; }
 .sec-title {
@@ -109,14 +114,52 @@ input[type=range] { width: 100%; accent-color: #6366f1; margin-top: 4px; cursor:
 .sim-controls button:hover  { background: rgba(99,102,241,0.32); }
 .sim-controls button.playing { background: rgba(99,102,241,0.40); border-color: #6366f1; }
 
-/* reset */
+/* camera presets */
+.cam-presets { display: flex; gap: 6px; }
+.cam-presets button {
+  flex: 1; padding: 6px 0; font-size: 11px; cursor: pointer;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px; color: #888;
+  transition: background 0.15s, color 0.15s;
+}
+.cam-presets button:hover { background: rgba(255,255,255,0.13); color: #ccc; }
+
+/* speed buttons */
+.speed-btns { display: flex; gap: 4px; }
+.speed-btn {
+  flex: 1; padding: 4px 0; font-size: 11px; cursor: pointer;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px; color: #666;
+  transition: background 0.15s, color 0.15s;
+}
+.speed-btn:hover  { background: rgba(255,255,255,0.12); color: #aaa; }
+.speed-btn.active { background: rgba(99,102,241,0.35); border-color: #6366f1; color: #e0e7ff; font-weight: 600; }
+
+/* copy to sim */
+#sim-copy-btn {
+  width: 100%; padding: 6px; margin-bottom: 10px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 7px; color: #777; font-size: 11px; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+#sim-copy-btn:hover { background: rgba(255,255,255,0.1); color: #bbb; }
+
+/* bottom buttons */
+.bottom-btns { display: flex; gap: 6px; margin-top: 2px; }
 #reset-btn {
-  width: 100%; padding: 8px; margin-top: 2px;
+  flex: 1; padding: 8px;
   background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.35);
   border-radius: 8px; color: #a5b4fc; font-size: 12px; cursor: pointer;
   transition: background 0.15s;
 }
 #reset-btn:hover { background: rgba(99,102,241,0.32); }
+#screenshot-btn {
+  padding: 8px 10px;
+  background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.35);
+  border-radius: 8px; color: #a5b4fc; font-size: 12px; cursor: pointer;
+  transition: background 0.15s; white-space: nowrap;
+}
+#screenshot-btn:hover { background: rgba(99,102,241,0.32); }
 
 /* loading */
 #loading {
@@ -165,8 +208,11 @@ input[type=range] { width: 100%; accent-color: #6366f1; margin-top: 4px; cursor:
   pointer-events: none;
   box-shadow: 0 2px 16px rgba(0,0,0,0.7);
 }
+#minimap-frame > * { pointer-events: auto; }
 #minimap-label {
   position: absolute; top: 5px; left: 7px;
   color: rgba(160,185,255,0.6);
   font-size: 9px; font-family: monospace; letter-spacing: 1px;
+  pointer-events: auto; user-select: none;
 }
+#minimap-label:hover { color: rgba(160,185,255,1); }

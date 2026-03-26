@@ -23,6 +23,7 @@ export class Minimap {
     this.active = false; // 미니맵 활성 상태 (모델 로드 후 true)
     this.sideRange = 8;  // 직교 카메라 시야 범위
     this.centerY   = 1;  // 모델 중심 Y값
+    this.viewMode  = 'side'; // 뷰 모드: 'side' | 'top' | 'front'
 
     // ── 미니맵 전용 직교 카메라 ───────────────────────────────────
     this.camera = new THREE.OrthographicCamera(-8, 8, 8, -8, 0.1, 300);
@@ -58,6 +59,21 @@ export class Minimap {
     this.camera.updateProjectionMatrix(); // 투영 행렬 재계산
     document.getElementById('minimap-frame').style.display = 'block'; // 미니맵 UI 표시
     this.active = true; // 렌더링 활성화
+    this._bindViewToggle(); // 뷰 전환 이벤트 등록
+  }
+
+  /**
+   * 미니맵 레이블 클릭 시 뷰 모드를 순환한다 (side → top → front → side).
+   */
+  _bindViewToggle() {
+    const label = document.getElementById('minimap-label');
+    label.style.cursor = 'pointer';
+    label.addEventListener('click', () => {
+      const modes = ['side', 'top', 'front'];
+      const names = { side: 'SIDE VIEW', top: 'TOP VIEW', front: 'FRONT VIEW' };
+      this.viewMode = modes[(modes.indexOf(this.viewMode) + 1) % modes.length];
+      label.textContent = names[this.viewMode];
+    });
   }
 
   /**
@@ -69,13 +85,24 @@ export class Minimap {
   render(renderer, mainCamera) {
     if (!this.active) return; // 모델 로드 전에는 렌더링하지 않음
 
-    // ── 메인 카메라 방향 동기화 ──────────────────────────────────
-    const dir = new THREE.Vector3();
-    mainCamera.getWorldDirection(dir); // 메인 카메라가 바라보는 방향 벡터
-    const target = new THREE.Vector3(0, this.centerY, 0); // 모델 중심점
-    // 미니맵 카메라를 메인 카메라 반대쪽에 배치하여 같은 방향을 바라보게 함
-    this.camera.position.copy(target).addScaledVector(dir, -this.sideRange * 5);
-    this.camera.up.copy(mainCamera.up);
+    // ── 뷰 모드에 따라 미니맵 카메라 위치 결정 ─────────────────
+    const target = new THREE.Vector3(0, this.centerY, 0);
+    const dist   = this.sideRange * 5;
+    if (this.viewMode === 'top') {
+      // 상단 뷰: 정위에서 내려다봄
+      this.camera.position.set(0, dist, 0.001);
+      this.camera.up.set(0, 0, -1);
+    } else if (this.viewMode === 'front') {
+      // 정면 뷰: 앞에서 바라봄
+      this.camera.position.set(0, this.centerY, dist);
+      this.camera.up.set(0, 1, 0);
+    } else {
+      // 사이드 뷰: 메인 카메라 방향 동기화 (기존 동작)
+      const dir = new THREE.Vector3();
+      mainCamera.getWorldDirection(dir);
+      this.camera.position.copy(target).addScaledVector(dir, -dist);
+      this.camera.up.copy(mainCamera.up);
+    }
     this.camera.lookAt(target);
 
     // ── 미니맵 뷰포트 계산 (우측 상단) ──────────────────────────

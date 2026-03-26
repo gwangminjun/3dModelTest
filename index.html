@@ -19,6 +19,7 @@
   <!-- Control Panel -->
   <div id="panel">
     <h3>건물 훼손 시뮬레이터</h3>
+    <div id="model-info"></div>
 
     <div class="sec">
       <div class="sec-title">날씨</div>
@@ -34,6 +35,15 @@
       <div class="sec-title">강도</div>
       <input type="range" id="intensity" min="1" max="100" value="50" />
       <div class="range-labels"><span>약</span><span id="intensity-val">50</span><span>강</span></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">카메라 시점</div>
+      <div class="cam-presets">
+        <button id="cam-front">정면</button>
+        <button id="cam-side">측면</button>
+        <button id="cam-top">상단</button>
+      </div>
     </div>
 
     <!-- 모드 토글 -->
@@ -121,13 +131,26 @@
       <div class="sim-time-display">
         <span id="sim-time-cur">0</span> / <span id="sim-time-total">30</span>초
       </div>
+      <div class="sim-row">
+        <span class="sim-label">배속</span>
+        <div class="speed-btns">
+          <button class="speed-btn" data-speed="0.5">0.5x</button>
+          <button class="speed-btn active" data-speed="1">1x</button>
+          <button class="speed-btn" data-speed="2">2x</button>
+          <button class="speed-btn" data-speed="4">4x</button>
+        </div>
+      </div>
+      <button id="sim-copy-btn">↓ 현재 변형값 복사</button>
       <div class="sim-controls">
         <button id="sim-play-btn">▶ 재생</button>
         <button id="sim-reset-btn">↺ 리셋</button>
       </div>
     </div>
 
-    <button id="reset-btn">↺ 전체 초기화</button>
+    <div class="bottom-btns">
+      <button id="reset-btn">↺ 전체 초기화</button>
+      <button id="screenshot-btn">📷 캡처</button>
+    </div>
   </div>
 
   <div id="hint">마우스: 회전 &nbsp;|&nbsp; 휠: 줌 &nbsp;|&nbsp; 우클릭: 이동</div>

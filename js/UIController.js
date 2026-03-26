@@ -23,11 +23,14 @@ export class UIController {
    * @param {WeatherController} deps.weatherController - 날씨 대기 제어
    * @param {ModelLoader} deps.modelLoader - 카메라 리셋용 모델 로더
    */
-  constructor({ deformManager, simController, weatherController, modelLoader }) {
-    this.dm  = deformManager;
-    this.sim = simController;
-    this.wc  = weatherController;
-    this.ml  = modelLoader;
+  constructor({ deformManager, simController, weatherController, modelLoader, renderer, camera, controls }) {
+    this.dm       = deformManager;
+    this.sim      = simController;
+    this.wc       = weatherController;
+    this.ml       = modelLoader;
+    this.renderer = renderer;
+    this.camera   = camera;
+    this.controls = controls;
 
     // ── 수동 제어 UI 요소 참조 ──────────────────────────────────
     this._crackChk    = document.getElementById('crack-chk');     // 균열 수동 제어 체크박스
@@ -48,10 +51,14 @@ export class UIController {
     this._AGE_RATE = { none: 0, rain: 3, wind: 4, quake: 7 };
 
     // ── 이벤트 바인딩 ────────────────────────────────────────────
-    this._bindWeather(); // 날씨 설정 이벤트
-    this._bindManual();  // 수동 변형 이벤트
-    this._bindTabs();    // 탭 전환 이벤트
-    this._bindReset();   // 리셋 버튼 이벤트
+    this._bindWeather();       // 날씨 설정 이벤트
+    this._bindManual();        // 수동 변형 이벤트
+    this._bindTabs();          // 탭 전환 이벤트
+    this._bindReset();         // 리셋 버튼 이벤트
+    this._bindScreenshot();    // 스크린샷 저장 이벤트
+    this._bindCameraPresets(); // 카메라 시점 프리셋 이벤트
+    this._bindCopyToSim();     // 수동값 → 시뮬레이션 목표 복사 이벤트
+    this._loadState();         // 저장된 상태 복원
   }
 
   /**
@@ -64,6 +71,7 @@ export class UIController {
       r.addEventListener('change', e => {
         this.wc.weatherType  = e.target.value; // 대기 컨트롤러 업데이트
         this.sim.weatherType = e.target.value; // 시뮬레이션 컨트롤러 업데이트
+        this.saveState();
       })
     );
     // 강도 슬라이더 값 변경 시
@@ -72,6 +80,7 @@ export class UIController {
       this.wc.intensity  = v;
       this.sim.intensity = v;
       document.getElementById('intensity-val').textContent = e.target.value; // 수치 표시
+      this.saveState();
     });
   }
 
@@ -111,6 +120,7 @@ export class UIController {
       if (this._ageChk.checked) {
         // 수동 모드에서 입력 값을 0 ~ 1000으로 제한하여 적용
         this.dm.applyAge(Math.max(0, Math.min(1000, parseFloat(this._ageInput.value) || 0)));
+        this.saveState();
       }
     });
   }
@@ -131,10 +141,11 @@ export class UIController {
       input.disabled = !manual;                              // 수동 모드에서만 입력 가능
       autoBadge.style.display = manual ? 'none' : 'inline'; // 자동 배지 토글
       if (manual) input.value = Math.round(getVal() * 100); // 현재 값 표시
+      this.saveState();
     });
     // 수치 입력 변경 시 (수동 모드에서만 적용)
     input.addEventListener('input', () => {
-      if (chk.checked) setVal((parseFloat(input.value) || 0) / 100);
+      if (chk.checked) { setVal((parseFloat(input.value) || 0) / 100); this.saveState(); }
     });
   }
 
@@ -192,6 +203,55 @@ export class UIController {
       this.dm.reset();         // 변형 유니폼 초기화
       this.sim.reset();        // 시뮬레이션 상태 초기화
       this.ml.resetCamera();   // 카메라 위치 초기화
+      localStorage.removeItem('damageSimState'); // 저장된 상태 삭제
+    });
+  }
+
+  /**
+   * 현재 렌더링 화면을 PNG 파일로 다운로드한다.
+   */
+  _bindScreenshot() {
+    document.getElementById('screenshot-btn').addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `damage_sim_${Date.now()}.png`;
+      link.href = this.renderer.domElement.toDataURL('image/png');
+      link.click();
+    });
+  }
+
+  /**
+   * 정면/측면/상단 카메라 시점 프리셋 버튼 이벤트를 등록한다.
+   * 모델이 로드되지 않은 경우 기본 거리를 사용한다.
+   */
+  _bindCameraPresets() {
+    const go = (pos, target) => {
+      this.camera.position.set(...pos);
+      this.controls.target.set(...target);
+      this.controls.update();
+    };
+    document.getElementById('cam-front').addEventListener('click', () => {
+      const h = this.ml.worldModelH || 2;
+      go([0, h * 0.8, h * 2.8], [0, h * 0.4, 0]);
+    });
+    document.getElementById('cam-side').addEventListener('click', () => {
+      const h = this.ml.worldModelH || 2;
+      go([h * 2.8, h * 0.8, 0], [0, h * 0.4, 0]);
+    });
+    document.getElementById('cam-top').addEventListener('click', () => {
+      const h = this.ml.worldModelH || 2;
+      go([0, h * 4.5, 0.001], [0, 0, 0]);
+    });
+  }
+
+  /**
+   * 현재 수동 변형 수치를 시뮬레이션 목표값 입력란에 복사한다.
+   */
+  _bindCopyToSim() {
+    document.getElementById('sim-copy-btn').addEventListener('click', () => {
+      document.getElementById('sim-crack-target').value    = Math.round(this.dm.uCrack.value);
+      document.getElementById('sim-collapse-target').value = Math.round(this.dm.uCollapse.value);
+      document.getElementById('sim-sink-target').value     = Math.round(this.dm.uSink.value);
+      document.getElementById('sim-age-target').value      = Math.round(this.dm.age);
     });
   }
 
@@ -251,5 +311,57 @@ export class UIController {
       inp.value  = Math.round(uVal.value); // UI 수치 업데이트
       aut.style.display = weatherType !== 'none' ? 'inline' : 'none'; // 자동 배지 표시
     }
+  }
+
+  /**
+   * 현재 날씨·강도·변형 수치를 localStorage에 저장한다.
+   * 날씨/강도/수동체크 변경 시 자동 호출된다.
+   */
+  saveState() {
+    const state = {
+      weather:  this.wc.weatherType,
+      intensity: Math.round(this._intensitySlider.value),
+      crack:    { manual: this._crackChk.checked,    val: Math.round(this.dm.uCrack.value) },
+      collapse: { manual: this._collapseChk.checked, val: Math.round(this.dm.uCollapse.value) },
+      sink:     { manual: this._sinkChk.checked,     val: Math.round(this.dm.uSink.value) },
+      age:      { manual: this._ageChk.checked,      val: Math.round(this.dm.age) },
+    };
+    localStorage.setItem('damageSimState', JSON.stringify(state));
+  }
+
+  /**
+   * localStorage에서 저장된 상태를 불러와 UI와 변형값을 복원한다.
+   */
+  _loadState() {
+    let state;
+    try { state = JSON.parse(localStorage.getItem('damageSimState')); } catch { return; }
+    if (!state) return;
+
+    // 날씨 복원
+    const weatherRadio = document.querySelector(`input[name="weather"][value="${state.weather}"]`);
+    if (weatherRadio) {
+      weatherRadio.checked = true;
+      this.wc.weatherType  = state.weather;
+      this.sim.weatherType = state.weather;
+    }
+    // 강도 복원
+    const iv = state.intensity ?? 50;
+    this._intensitySlider.value = iv;
+    this.wc.intensity  = iv / 100;
+    this.sim.intensity = iv / 100;
+    document.getElementById('intensity-val').textContent = iv;
+
+    // 각 변형 항목 복원
+    const restore = (chk, inp, aut, setFn, entry) => {
+      if (!entry) return;
+      chk.checked         = entry.manual;
+      inp.disabled        = !entry.manual;
+      aut.style.display   = entry.manual ? 'none' : 'none';
+      if (entry.manual) { inp.value = entry.val; setFn(entry.val); }
+    };
+    restore(this._crackChk,    this._crackInput,    this._crackAuto,    v => { this.dm.uCrack.value = v; },    state.crack);
+    restore(this._collapseChk, this._collapseInput, this._collapseAuto, v => { this.dm.uCollapse.value = v; }, state.collapse);
+    restore(this._sinkChk,     this._sinkInput,     this._sinkAuto,     v => { this.dm.uSink.value = v; },    state.sink);
+    restore(this._ageChk,      this._ageInput,      this._ageAuto,      v => this.dm.applyAge(v),             state.age);
   }
 }

@@ -43,13 +43,13 @@ export class WeatherController {
     const sp = this.intensity;
     let crack = 0, collapse = 0, sink = 0;
     // 날씨별 변형 목표값 계산 (강도에 비례)
-    if (this.weatherType === 'rain')  { crack += sp * 45; sink     += sp * 22; }  // 비: 균열 + 침하
-    if (this.weatherType === 'wind')  { collapse += sp * 65; crack  += sp * 20; } // 바람: 붕괴 + 균열
-    if (this.weatherType === 'quake') { crack += sp * 75; collapse  += sp * 80; sink += sp * 55; } // 지진: 전 효과 극대
+    if (this.weatherType === 'rain')  { crack += sp * 220; sink     += sp * 110; } // 비: 균열 + 침하
+    if (this.weatherType === 'wind')  { collapse += sp * 320; crack  += sp * 100; } // 바람: 붕괴 + 균열
+    if (this.weatherType === 'quake') { crack += sp * 375; collapse += sp * 400; sink += sp * 275; } // 지진: 전 효과 극대
     return {
-      crack:    Math.min(crack,    100), // 최대값 100으로 제한
-      collapse: Math.min(collapse, 100),
-      sink:     Math.min(sink,     100),
+      crack:    Math.min(crack,    500), // 최대값 500으로 제한
+      collapse: Math.min(collapse, 500),
+      sink:     Math.min(sink,     500),
     };
   }
 

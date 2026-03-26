@@ -13,7 +13,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 export class SceneManager {
   constructor() {
     // ── 렌더러 설정 ──────────────────────────────────────────────
-    this.renderer = new THREE.WebGLRenderer({ antialias: true }); // 안티앨리어싱 활성화
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); // 안티앨리어싱·스크린샷 지원
     this.renderer.setPixelRatio(window.devicePixelRatio);          // 디스플레이 픽셀 비율 적용
     this.renderer.setSize(innerWidth, innerHeight);                // 렌더 크기를 화면 전체로 설정
     this.renderer.shadowMap.enabled = true;                        // 그림자 맵 활성화
