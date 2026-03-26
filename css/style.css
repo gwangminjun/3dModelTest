@@ -154,3 +154,19 @@ input[type=range] { width: 100%; accent-color: #6366f1; margin-top: 4px; cursor:
   transform: translateX(-50%);
   color: #333; font-size: 11px; pointer-events: none;
 }
+
+/* minimap */
+#minimap-frame {
+  display: none;
+  position: fixed; right: 10px; bottom: 10px;
+  width: 180px; height: 180px;
+  border: 1px solid rgba(100,120,220,0.45);
+  border-radius: 6px;
+  pointer-events: none;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.7);
+}
+#minimap-label {
+  position: absolute; top: 5px; left: 7px;
+  color: rgba(160,185,255,0.6);
+  font-size: 9px; font-family: monospace; letter-spacing: 1px;
+}

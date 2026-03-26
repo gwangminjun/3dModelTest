@@ -131,6 +131,7 @@
   </div>
 
   <div id="hint">마우스: 회전 &nbsp;|&nbsp; 휠: 줌 &nbsp;|&nbsp; 우클릭: 이동</div>
+  <div id="minimap-frame"><span id="minimap-label">SIDE VIEW</span></div>
   <div id="drop-overlay"><span>GLB 파일을 여기에 놓으세요</span></div>
 
   <script type="importmap">
@@ -172,6 +173,25 @@
     controls.dampingFactor = 0.05;
     controls.minDistance = 0.5;
     controls.maxDistance = 100;
+
+    // ── Minimap ───────────────────────────────────────────────────
+    const MM_W = 180, MM_H = 180, MM_M = 10;
+    const minimapCamera = new THREE.OrthographicCamera(-8, 8, 8, -8, 0.1, 300);
+    minimapCamera.position.set(0, 2, 30);
+    minimapCamera.up.set(0, 1, 0);
+    minimapCamera.lookAt(0, 2, 0);
+    minimapCamera.layers.enable(1); // 카메라 인디케이터 레이어
+
+    // 카메라 위치·방향 인디케이터 (minimap 전용 레이어 1)
+    const camCone = new THREE.Mesh(
+      new THREE.ConeGeometry(0.28, 0.65, 6),
+      new THREE.MeshBasicMaterial({ color: 0xffee44, depthTest: false })
+    );
+    camCone.rotation.x = Math.PI / 2; // +Z 방향으로 눕힘
+    camCone.layers.set(1);
+    const camGroup = new THREE.Group();
+    camGroup.add(camCone);
+    scene.add(camGroup);
 
     // ── Lights ────────────────────────────────────────────────────
     const ambient  = new THREE.AmbientLight(0xffffff, 0.6);
@@ -347,6 +367,7 @@ float _fbm(vec3 p) {
     let currentModel = null;
     let initCamPos = null, initCamTarget = null;
     let worldModelH = 2.0;
+    let mmSideRange = 8, mmCenterY = 1;
     let meshMaterials = []; // 재질 원본 속성 저장 (노화 효과용)
 
     function placeModel(gltf) {
@@ -377,6 +398,14 @@ float _fbm(vec3 p) {
       uModelH.value    = size.y;
       worldModelH      = size.y * scale;
       scene.add(model);
+
+      // 미니맵 카메라 범위 업데이트
+      mmSideRange = Math.max(size.x, size.y) * scale * 0.75 + 1.5;
+      mmCenterY   = worldModelH * 0.5;
+      minimapCamera.left   = -mmSideRange; minimapCamera.right  = mmSideRange;
+      minimapCamera.top    =  mmSideRange; minimapCamera.bottom = -mmSideRange;
+      minimapCamera.updateProjectionMatrix();
+      document.getElementById('minimap-frame').style.display = 'block';
 
       // 모델 오른쪽 옆에 축 표시
       const axisOffset = size.x * scale / 2 + 0.5;
@@ -809,7 +838,41 @@ float _fbm(vec3 p) {
         }
       }
 
+      // ── 메인 렌더 ──
+      renderer.autoClear = true;
+      renderer.setScissorTest(false);
+      renderer.setViewport(0, 0, innerWidth, innerHeight);
       renderer.render(scene, camera);
+
+      // ── 미니맵 렌더 ──
+      if (currentModel) {
+        // 메인 카메라 방향을 미니맵 카메라에 동기화
+        const mmDir = new THREE.Vector3();
+        camera.getWorldDirection(mmDir);
+        const mmTarget = new THREE.Vector3(0, mmCenterY, 0);
+        minimapCamera.position.copy(mmTarget).addScaledVector(mmDir, -mmSideRange * 5);
+        minimapCamera.up.copy(camera.up);
+        minimapCamera.lookAt(mmTarget);
+
+        const mmX = innerWidth  - MM_W - MM_M;
+        const mmY = MM_M; // WebGL: y=0 is bottom
+        renderer.autoClear = false;
+        renderer.setScissorTest(true);
+        renderer.setScissor(mmX, mmY, MM_W, MM_H);
+        renderer.setViewport(mmX, mmY, MM_W, MM_H);
+        const savedColor = new THREE.Color();
+        renderer.getClearColor(savedColor);
+        const savedAlpha = renderer.getClearAlpha();
+        renderer.setClearColor(0x080812, 1);
+        renderer.clear();
+        renderer.setClearColor(savedColor, savedAlpha);
+        const savedFog = scene.fog; scene.fog = null;
+        renderer.render(scene, minimapCamera);
+        scene.fog = savedFog;
+        renderer.setScissorTest(false);
+        renderer.setViewport(0, 0, innerWidth, innerHeight);
+        renderer.autoClear = true;
+      }
     })();
   </script>
 </body>
