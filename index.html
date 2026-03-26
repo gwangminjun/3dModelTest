@@ -189,6 +189,30 @@
     grid.material.transparent = true;
     scene.add(grid);
 
+    // ── Axes Helper (X: 빨강, Y: 초록, Z: 파랑) ───────────────────
+    const axesHelper = new THREE.AxesHelper(1);
+    axesHelper.visible = false;
+    scene.add(axesHelper);
+
+    function makeAxisLabel(text, color) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64; canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = color;
+      ctx.font = 'bold 52px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 32, 34);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), depthTest: false, transparent: true }));
+      sprite.visible = false;
+      scene.add(sprite);
+      return sprite;
+    }
+
+    const xLabel = makeAxisLabel('X', '#ff5555');
+    const yLabel = makeAxisLabel('Y', '#55ff55');
+    const zLabel = makeAxisLabel('Z', '#5599ff');
+
     // ── Deform Uniforms ───────────────────────────────────────────
     const uCrack     = { value: 0.0 };
     const uCollapse  = { value: 0.0 };
@@ -353,6 +377,19 @@ float _fbm(vec3 p) {
       uModelH.value    = size.y;
       worldModelH      = size.y * scale;
       scene.add(model);
+
+      // 모델 오른쪽 옆에 축 표시
+      const axisOffset = size.x * scale / 2 + 0.5;
+      const axisScale  = Math.max(0.4, worldModelH * 0.45);
+      axesHelper.position.set(axisOffset, 0, 0);
+      axesHelper.scale.setScalar(axisScale);
+      axesHelper.visible = true;
+
+      const ls = axisScale * 0.22; // 레이블 스프라이트 크기
+      const lp = axisScale * 1.22; // 축 끝 + 여백
+      xLabel.position.set(axisOffset + lp, 0,  0); xLabel.scale.set(ls, ls, 1); xLabel.visible = true;
+      yLabel.position.set(axisOffset,  lp, 0); yLabel.scale.set(ls, ls, 1); yLabel.visible = true;
+      zLabel.position.set(axisOffset,  0,  lp); zLabel.scale.set(ls, ls, 1); zLabel.visible = true;
 
       const h = worldModelH;
       initCamPos    = new THREE.Vector3(0, h * 0.8, h * 2.8);
