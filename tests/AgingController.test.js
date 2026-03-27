@@ -92,3 +92,98 @@ describe('AgingController tick', () => {
     expect(dm.applyAge).toHaveBeenCalledWith(expect.closeTo(500, 0));
   });
 });
+
+describe('AgingController enabledEffects', () => {
+  let dm;
+
+  beforeEach(() => {
+    setupDOM();
+    dm = makeDM();
+  });
+
+  it('crack 비활성화 시 uCrack.value가 변경되지 않는다', () => {
+    const ctrl = new AgingController(dm);
+    ctrl.playing = true;
+    ctrl.enabledEffects.crack = false;
+    ctrl.tick(5);
+    expect(dm.uCrack.value).toBe(0);
+  });
+
+  it('age 비활성화 시 applyAge가 호출되지 않는다', () => {
+    const ctrl = new AgingController(dm);
+    ctrl.playing = true;
+    ctrl.enabledEffects.age = false;
+    ctrl.tick(5);
+    expect(dm.applyAge).not.toHaveBeenCalled();
+  });
+});
+
+describe('AgingController speed', () => {
+  beforeEach(() => {
+    setupDOM();
+  });
+
+  it('speed=2 이면 동일 dt에서 elapsed가 2배 증가한다', () => {
+    const ctrl = new AgingController(makeDM());
+    ctrl.playing = true;
+    ctrl.speed   = 2;
+    ctrl.tick(1);
+    expect(ctrl.elapsed).toBeCloseTo(2);
+  });
+});
+
+describe('AgingController reset', () => {
+  beforeEach(() => {
+    setupDOM();
+  });
+
+  it('reset 후 elapsed가 0이 된다', () => {
+    const ctrl = new AgingController(makeDM());
+    ctrl.playing = true;
+    ctrl.tick(5);
+    ctrl.reset();
+    expect(ctrl.elapsed).toBe(0);
+  });
+
+  it('reset 후 playing이 false가 된다', () => {
+    const ctrl = new AgingController(makeDM());
+    ctrl.playing = true;
+    ctrl.reset();
+    expect(ctrl.playing).toBe(false);
+  });
+
+  it('reset 후 모든 효과가 0으로 초기화된다', () => {
+    const dm2 = makeDM();
+    const ctrl = new AgingController(dm2);
+    ctrl.playing = true;
+    ctrl.tick(5);
+    ctrl.reset();
+    expect(dm2.uCrack.value).toBe(0);
+    expect(dm2.uCollapse.value).toBe(0);
+    expect(dm2.uSink.value).toBe(0);
+    expect(dm2.applyAge).toHaveBeenLastCalledWith(0);
+  });
+});
+
+describe('AgingController complete', () => {
+  beforeEach(() => {
+    setupDOM();
+  });
+
+  it('durationSeconds 도달 시 completed가 true가 된다', () => {
+    const ctrl = new AgingController(makeDM());
+    ctrl.playing = true;
+    ctrl.durationSeconds = 5;
+    ctrl.tick(10);
+    expect(ctrl.completed).toBe(true);
+    expect(ctrl.playing).toBe(false);
+  });
+
+  it('완료 후 elapsed는 durationSeconds를 초과하지 않는다', () => {
+    const ctrl = new AgingController(makeDM());
+    ctrl.playing = true;
+    ctrl.durationSeconds = 5;
+    ctrl.tick(100);
+    expect(ctrl.elapsed).toBe(5);
+  });
+});
