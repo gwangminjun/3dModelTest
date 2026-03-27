@@ -407,7 +407,7 @@ export class UIController {
       if (!entry) return;
       chk.checked         = entry.manual;
       inp.disabled        = !entry.manual;
-      aut.style.display   = entry.manual ? 'none' : 'none';
+      aut.style.display   = entry.manual ? 'none' : 'inline';
       if (entry.manual) { inp.value = entry.val; setFn(entry.val); }
     };
     restore(this._crackChk,    this._crackInput,    this._crackAuto,    v => { this.dm.uCrack.value = v; },    state.crack);

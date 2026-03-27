@@ -80,8 +80,10 @@ const clock = new THREE.Clock(); // 프레임 간 시간(dt) 측정용 클럭
   simController.tick(dt);
   if (!simController.playing && !simController.completed) {
     agingCtrl.tick(dt);          // 자동 노쇠화 진행 (시뮬레이션 비활성 시)
-    // 시뮬레이션이 비활성 상태일 때만 날씨 기반 자동 변형 실행
-    uiController.tickAutoDeform(dt);
+    if (!agingCtrl.playing) {
+      // 노쇠화 애니메이션 비활성 시에만 날씨 기반 자동 변형 실행
+      uiController.tickAutoDeform(dt);
+    }
   }
 
   // 메인 씬 렌더링 (전체 화면)
