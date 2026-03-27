@@ -67,7 +67,7 @@ const clock = new THREE.Clock(); // 프레임 간 시간(dt) 측정용 클럭
   // 변형 셰이더의 시간 유니폼 증가 (흔들림 애니메이션용)
   deformManager.uTime.value += dt;
   // 현재 날씨 타입과 강도에 맞게 파티클 이동
-  particleSystem.tick(weatherController.weatherType, weatherController.intensity);
+  particleSystem.tick(weatherController.weatherTypes, weatherController.intensity);
   // 배경색, 안개, 조명을 날씨 상태에 맞게 부드럽게 전환
   weatherController.updateAtmosphere();
   // 노화 수치에 따른 메시 머티리얼 거칠기 업데이트

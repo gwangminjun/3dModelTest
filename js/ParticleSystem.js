@@ -87,14 +87,14 @@ export class ParticleSystem {
 
   /**
    * 매 프레임 파티클 위치를 업데이트한다.
-   * 현재 날씨 타입에 해당하는 파티클만 표시하고 이동시킨다.
-   * @param {string} weatherType - 날씨 타입 ('rain' | 'wind' | 'quake' | 'none')
+   * 활성화된 날씨 타입에 해당하는 파티클을 동시에 표시하고 이동시킨다.
+   * @param {Set<string>} weatherTypes - 활성 날씨 타입 집합
    * @param {number} intensity - 강도 (0.0 ~ 1.0)
    */
-  tick(weatherType, intensity) {
-    const hasRain  = weatherType === 'rain';
-    const hasWind  = weatherType === 'wind';
-    const hasQuake = weatherType === 'quake';
+  tick(weatherTypes, intensity) {
+    const hasRain  = weatherTypes.has('rain');
+    const hasWind  = weatherTypes.has('wind');
+    const hasQuake = weatherTypes.has('quake');
     const sp = intensity; // 강도 단축 변수
     const t = performance.now() * 0.001; // 경과 시간 (초)
     const { _RANGE: RANGE, _CEIL: CEIL } = this;

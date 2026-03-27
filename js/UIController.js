@@ -62,18 +62,42 @@ export class UIController {
   }
 
   /**
-   * 날씨 라디오 버튼과 강도 슬라이더에 이벤트 리스너를 등록한다.
-   * WeatherController와 SimulationController에 날씨 상태를 동기화한다.
+   * 날씨 체크박스와 강도 슬라이더에 이벤트 리스너를 등록한다.
+   * '없음' 체크 시 다른 날씨를 모두 해제하고, 반대로 날씨 선택 시 '없음'을 해제한다.
+   * SimulationController는 WeatherController와 같은 Set 참조를 공유한다.
    */
   _bindWeather() {
-    // 날씨 타입 라디오 버튼 변경 시
-    document.querySelectorAll('input[name="weather"]').forEach(r =>
-      r.addEventListener('change', e => {
-        this.wc.weatherType  = e.target.value; // 대기 컨트롤러 업데이트
-        this.sim.weatherType = e.target.value; // 시뮬레이션 컨트롤러 업데이트
+    // sim이 wc와 동일한 Set을 참조하도록 초기화
+    this.sim.weatherTypes = this.wc.weatherTypes;
+
+    const noneChk = document.querySelector('.weather-chk[value="none"]');
+
+    document.querySelectorAll('.weather-chk').forEach(chk => {
+      chk.addEventListener('change', () => {
+        if (chk.value === 'none') {
+          // '없음' 선택 → 모든 날씨 해제
+          if (chk.checked) {
+            document.querySelectorAll('.weather-chk:not([value="none"])').forEach(c => c.checked = false);
+            this.wc.weatherTypes.clear();
+          } else {
+            // '없음' 단독 해제는 허용하지 않음
+            chk.checked = true;
+          }
+        } else {
+          // 개별 날씨 토글
+          if (chk.checked) {
+            noneChk.checked = false;
+            this.wc.weatherTypes.add(chk.value);
+          } else {
+            this.wc.weatherTypes.delete(chk.value);
+            // 모두 해제되면 자동으로 '없음' 체크
+            if (this.wc.weatherTypes.size === 0) noneChk.checked = true;
+          }
+        }
         this.saveState();
-      })
-    );
+      });
+    });
+
     // 강도 슬라이더 값 변경 시
     this._intensitySlider.addEventListener('input', e => {
       const v = e.target.value / 100; // 0 ~ 100 → 0.0 ~ 1.0
@@ -178,9 +202,8 @@ export class UIController {
   _bindReset() {
     document.getElementById('reset-btn').addEventListener('click', () => {
       // 날씨를 '없음'으로 초기화
-      document.querySelector('input[name="weather"][value="none"]').checked = true;
-      this.wc.weatherType  = 'none';
-      this.sim.weatherType = 'none';
+      document.querySelectorAll('.weather-chk').forEach(c => { c.checked = c.value === 'none'; });
+      this.wc.weatherTypes.clear();
       // 강도를 기본값(50%)으로 초기화
       this._intensitySlider.value = 50;
       this.wc.intensity  = 0.5;
@@ -244,14 +267,18 @@ export class UIController {
   }
 
   /**
-   * 현재 수동 변형 수치를 시뮬레이션 목표값 입력란에 복사한다.
+   * 현재 변형 수치를 새 키프레임으로 추가한다.
+   * 추가 시점은 마지막 키프레임 시간 + 5초.
    */
   _bindCopyToSim() {
     document.getElementById('sim-copy-btn').addEventListener('click', () => {
-      document.getElementById('sim-crack-target').value    = Math.round(this.dm.uCrack.value);
-      document.getElementById('sim-collapse-target').value = Math.round(this.dm.uCollapse.value);
-      document.getElementById('sim-sink-target').value     = Math.round(this.dm.uSink.value);
-      document.getElementById('sim-age-target').value      = Math.round(this.dm.age);
+      this.sim.addKeyframe(
+        this.sim.getNextKeyframeTime(),
+        Math.round(this.dm.uCrack.value),
+        Math.round(this.dm.uCollapse.value),
+        Math.round(this.dm.uSink.value),
+        Math.round(this.dm.age)
+      );
     });
   }
 
@@ -263,29 +290,29 @@ export class UIController {
    * @param {number} dt - 이전 프레임과의 시간 차이 (초)
    */
   tickAutoDeform(dt) {
-    const { weatherType, intensity } = this.wc;
-    const tgt = this.wc.calcAutoTargets(); // 현재 날씨에 따른 목표값 계산
+    const { weatherTypes, intensity } = this.wc;
+    const tgt        = this.wc.calcAutoTargets(); // 활성 날씨 합산 목표값 계산
+    const hasWeather = weatherTypes.size > 0;     // 날씨 활성 여부
 
     // 각 변형 항목을 목표값으로 부드럽게 수렴 (자동 모드일 때만)
-    this._autoLerp(this._crackChk,    this._crackInput,    this._crackAuto,    this.dm.uCrack,    tgt.crack,    0.020, weatherType);
-    this._autoLerp(this._collapseChk, this._collapseInput, this._collapseAuto, this.dm.uCollapse, tgt.collapse, 0.015, weatherType);
-    this._autoLerp(this._sinkChk,     this._sinkInput,     this._sinkAuto,     this.dm.uSink,     tgt.sink,     0.015, weatherType);
+    this._autoLerp(this._crackChk,    this._crackInput,    this._crackAuto,    this.dm.uCrack,    tgt.crack,    0.020, hasWeather);
+    this._autoLerp(this._collapseChk, this._collapseInput, this._collapseAuto, this.dm.uCollapse, tgt.collapse, 0.015, hasWeather);
+    this._autoLerp(this._sinkChk,     this._sinkInput,     this._sinkAuto,     this.dm.uSink,     tgt.sink,     0.015, hasWeather);
 
-    // 흔들림: 지진 날씨일 때 강도로 수렴, 아닐 때 0으로 수렴
+    // 흔들림: 지진이 활성화된 경우 강도로 수렴, 아닐 때 0으로 수렴
     this.dm.uShake.value = THREE.MathUtils.lerp(
       this.dm.uShake.value,
-      weatherType === 'quake' ? intensity : 0,
+      weatherTypes.has('quake') ? intensity : 0,
       0.05
     );
 
-    // 노화 자동 누적 (수동 모드가 아닐 때만)
+    // 노화 자동 누적 (수동 모드가 아닐 때만) — 활성 날씨 누적 속도 합산
     if (!this._ageChk.checked) {
-      const rate   = (this._AGE_RATE[weatherType] || 0) * intensity; // 초당 노화 증가량
-      const newAge = Math.min(1000, this.dm.age + rate * dt);         // 최대 1000
+      const rate   = [...weatherTypes].reduce((sum, t) => sum + (this._AGE_RATE[t] || 0), 0) * intensity;
+      const newAge = Math.min(1000, this.dm.age + rate * dt);
       this.dm.applyAge(newAge);
       this._ageInput.value = Math.round(this.dm.age);
-      // 날씨가 있을 때만 자동 배지 표시
-      this._ageAuto.style.display = weatherType !== 'none' ? 'inline' : 'none';
+      this._ageAuto.style.display = hasWeather ? 'inline' : 'none';
     }
   }
 
@@ -299,9 +326,9 @@ export class UIController {
    * @param {{ value: number }} uVal - 유니폼 값 객체 (참조)
    * @param {number} target - 자동 모드에서의 목표값
    * @param {number} speed - lerp 속도 (0 ~ 1)
-   * @param {string} weatherType - 현재 날씨 타입
+   * @param {boolean} hasWeather - 날씨가 하나라도 활성화된 여부
    */
-  _autoLerp(chk, inp, aut, uVal, target, speed, weatherType) {
+  _autoLerp(chk, inp, aut, uVal, target, speed, hasWeather) {
     if (chk.checked) {
       // 수동 모드: 값을 0 ~ 1000 범위로 제한만 함
       uVal.value = Math.max(0, Math.min(1000, uVal.value));
@@ -309,7 +336,7 @@ export class UIController {
       // 자동 모드: 목표값으로 부드럽게 수렴
       uVal.value = THREE.MathUtils.lerp(uVal.value, target, speed);
       inp.value  = Math.round(uVal.value); // UI 수치 업데이트
-      aut.style.display = weatherType !== 'none' ? 'inline' : 'none'; // 자동 배지 표시
+      aut.style.display = hasWeather ? 'inline' : 'none'; // 자동 배지 표시
     }
   }
 
@@ -319,7 +346,7 @@ export class UIController {
    */
   saveState() {
     const state = {
-      weather:  this.wc.weatherType,
+      weather:  [...this.wc.weatherTypes], // 활성 날씨 배열로 직렬화
       intensity: Math.round(this._intensitySlider.value),
       crack:    { manual: this._crackChk.checked,    val: Math.round(this.dm.uCrack.value) },
       collapse: { manual: this._collapseChk.checked, val: Math.round(this.dm.uCollapse.value) },
@@ -337,13 +364,17 @@ export class UIController {
     try { state = JSON.parse(localStorage.getItem('damageSimState')); } catch { return; }
     if (!state) return;
 
-    // 날씨 복원
-    const weatherRadio = document.querySelector(`input[name="weather"][value="${state.weather}"]`);
-    if (weatherRadio) {
-      weatherRadio.checked = true;
-      this.wc.weatherType  = state.weather;
-      this.sim.weatherType = state.weather;
-    }
+    // 날씨 복원 (구버전 문자열 형식도 호환)
+    const weathers = Array.isArray(state.weather)
+      ? state.weather
+      : (state.weather && state.weather !== 'none' ? [state.weather] : []);
+    const noneChk = document.querySelector('.weather-chk[value="none"]');
+    weathers.forEach(w => {
+      this.wc.weatherTypes.add(w);
+      const chk = document.querySelector(`.weather-chk[value="${w}"]`);
+      if (chk) chk.checked = true;
+    });
+    if (noneChk) noneChk.checked = this.wc.weatherTypes.size === 0;
     // 강도 복원
     const iv = state.intensity ?? 50;
     this._intensitySlider.value = iv;

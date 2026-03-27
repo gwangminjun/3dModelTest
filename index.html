@@ -24,10 +24,10 @@
     <div class="sec">
       <div class="sec-title">날씨</div>
       <div class="rg">
-        <label><input type="radio" name="weather" value="none"  checked> 없음</label>
-        <label><input type="radio" name="weather" value="rain">  비</label>
-        <label><input type="radio" name="weather" value="wind">  강풍</label>
-        <label><input type="radio" name="weather" value="quake"> 지진</label>
+        <label><input type="checkbox" class="weather-chk" value="none"  checked> 없음</label>
+        <label><input type="checkbox" class="weather-chk" value="rain">  비</label>
+        <label><input type="checkbox" class="weather-chk" value="wind">  강풍</label>
+        <label><input type="checkbox" class="weather-chk" value="quake"> 지진</label>
       </div>
     </div>
 
@@ -89,49 +89,28 @@
       </div>
     </div>
 
-    <!-- 시뮬레이션 패널 -->
+    <!-- 시뮬레이션 패널 (키프레임) -->
     <div id="panel-sim" class="sec mode-panel" style="display:none;">
-      <div class="deform-hint">목표값까지 지정 시간 동안 진행</div>
-      <div class="deform-row">
-        <label class="sim-target-label">균열</label>
-        <div class="num-wrap">
-          <input type="number" id="sim-crack-target"    value="0" min="0" max="1000" />
-          <span class="unit">/ 1000</span>
-        </div>
+      <div class="deform-hint">키프레임마다 목표값을 설정, 구간별 보간 재생</div>
+
+      <!-- 키프레임 목록 헤더 -->
+      <div class="kf-header">
+        <span class="kf-col-t">초</span>
+        <span class="kf-col-v">균열</span>
+        <span class="kf-col-v">붕괴</span>
+        <span class="kf-col-v">침하</span>
+        <span class="kf-col-v">노화</span>
+        <span class="kf-col-x"></span>
       </div>
-      <div class="deform-row">
-        <label class="sim-target-label">붕괴</label>
-        <div class="num-wrap">
-          <input type="number" id="sim-collapse-target" value="0" min="0" max="1000" />
-          <span class="unit">/ 1000</span>
-        </div>
-      </div>
-      <div class="deform-row">
-        <label class="sim-target-label">침하</label>
-        <div class="num-wrap">
-          <input type="number" id="sim-sink-target"     value="0" min="0" max="1000" />
-          <span class="unit">/ 1000</span>
-        </div>
-      </div>
-      <div class="deform-row">
-        <label class="sim-target-label">노화</label>
-        <div class="num-wrap">
-          <input type="number" id="sim-age-target"      value="0" min="0" max="1000" />
-          <span class="unit">/ 1000</span>
-        </div>
-      </div>
+
+      <!-- 키프레임 행 컨테이너 (JS가 동적 생성) -->
+      <div id="kf-list"></div>
+
+      <!-- 키프레임 추가 -->
+      <button id="kf-add-btn">+ 키프레임 추가</button>
+
+      <!-- 배속 -->
       <div class="sim-row" style="margin-top:10px;">
-        <span class="sim-label">진행 시간</span>
-        <input type="number" id="sim-duration" value="30" min="1" max="3600" />
-        <span class="unit">초</span>
-      </div>
-      <div class="sim-progress-wrap">
-        <div id="sim-progress-bar"></div>
-      </div>
-      <div class="sim-time-display">
-        <span id="sim-time-cur">0</span> / <span id="sim-time-total">30</span>초
-      </div>
-      <div class="sim-row">
         <span class="sim-label">배속</span>
         <div class="speed-btns">
           <button class="speed-btn" data-speed="0.5">0.5x</button>
@@ -140,7 +119,19 @@
           <button class="speed-btn" data-speed="4">4x</button>
         </div>
       </div>
-      <button id="sim-copy-btn">↓ 현재 변형값 복사</button>
+
+      <!-- 현재 변형값 → 새 키프레임으로 복사 -->
+      <button id="sim-copy-btn">↓ 현재 변형값으로 추가</button>
+
+      <!-- 진행 바 -->
+      <div class="sim-progress-wrap">
+        <div id="sim-progress-bar"></div>
+      </div>
+      <div class="sim-time-display">
+        <span id="sim-time-cur">0</span> / <span id="sim-time-total">0</span>초
+      </div>
+
+      <!-- 재생 컨트롤 -->
       <div class="sim-controls">
         <button id="sim-play-btn">▶ 재생</button>
         <button id="sim-reset-btn">↺ 리셋</button>

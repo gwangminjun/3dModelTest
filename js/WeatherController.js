@@ -25,8 +25,8 @@ export class WeatherController {
     this.scene     = scene;
     this.ambient   = ambient;
     this.sunLight  = sunLight;
-    this.weatherType = 'none'; // 현재 날씨 타입
-    this.intensity   = 0.5;   // 날씨 강도 (0.0 ~ 1.0)
+    this.weatherTypes = new Set(); // 활성 날씨 타입 집합 (복수 선택 가능)
+    this.intensity    = 0.5;      // 날씨 강도 (0.0 ~ 1.0)
 
     // ── 날씨별 배경색 정의 ─────────────────────────────────────────
     this._clearBg = new THREE.Color(0x1a1a2e); // 맑은 날: 어두운 남색
@@ -42,10 +42,10 @@ export class WeatherController {
   calcAutoTargets() {
     const sp = this.intensity;
     let crack = 0, collapse = 0, sink = 0;
-    // 날씨별 변형 목표값 계산 (강도에 비례)
-    if (this.weatherType === 'rain')  { crack += sp * 220; sink     += sp * 110; } // 비: 균열 + 침하
-    if (this.weatherType === 'wind')  { collapse += sp * 320; crack  += sp * 100; } // 바람: 붕괴 + 균열
-    if (this.weatherType === 'quake') { crack += sp * 375; collapse += sp * 400; sink += sp * 275; } // 지진: 전 효과 극대
+    // 활성화된 모든 날씨의 변형 목표값을 합산 (강도에 비례)
+    if (this.weatherTypes.has('rain'))  { crack    += sp * 220; sink     += sp * 110; } // 비: 균열 + 침하
+    if (this.weatherTypes.has('wind'))  { collapse += sp * 320; crack    += sp * 100; } // 바람: 붕괴 + 균열
+    if (this.weatherTypes.has('quake')) { crack    += sp * 375; collapse += sp * 400; sink += sp * 275; } // 지진: 전 효과 극대
     return {
       crack:    Math.min(crack,    500), // 최대값 500으로 제한
       collapse: Math.min(collapse, 500),
@@ -58,8 +58,8 @@ export class WeatherController {
    * lerp(선형 보간)로 배경색, 안개, 조명을 서서히 변화시킨다.
    */
   updateAtmosphere() {
-    const stormy   = this.weatherType !== 'none';          // 폭풍 상태 여부
-    const isQuake  = this.weatherType === 'quake';         // 지진 여부
+    const stormy   = this.weatherTypes.size > 0;           // 날씨 활성 여부
+    const isQuake  = this.weatherTypes.has('quake');       // 지진 포함 여부
     const targetBg = isQuake ? this._quakeBg : (stormy ? this._stormBg : this._clearBg); // 목표 배경색 결정
 
     // 배경색과 안개색을 목표 색상으로 서서히 전환 (3% 보간)

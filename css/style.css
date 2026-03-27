@@ -30,6 +30,7 @@ canvas { display: block; }
 .rg { display: flex; flex-wrap: wrap; gap: 8px; }
 .rg label { display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; color: #999; }
 .rg label:has(input:checked) { color: #a5b4fc; font-weight: 600; }
+.rg label:has(input[value="none"]:checked) { color: #666; font-weight: 400; }
 input[type=radio], input[type=checkbox] { accent-color: #6366f1; cursor: pointer; }
 
 /* intensity */
@@ -134,6 +135,48 @@ input[type=range] { width: 100%; accent-color: #6366f1; margin-top: 4px; cursor:
 }
 .speed-btn:hover  { background: rgba(255,255,255,0.12); color: #aaa; }
 .speed-btn.active { background: rgba(99,102,241,0.35); border-color: #6366f1; color: #e0e7ff; font-weight: 600; }
+
+/* keyframe editor */
+.kf-header, .kf-row {
+  display: grid;
+  grid-template-columns: 34px repeat(4, 1fr) 18px;
+  gap: 3px;
+  align-items: center;
+  margin-bottom: 3px;
+}
+.kf-header {
+  margin-bottom: 4px;
+}
+.kf-col-t, .kf-col-v {
+  font-size: 9px; color: #444; text-align: center;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.kf-row input[type=number] {
+  width: 100%; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 5px;
+  color: #ccc; padding: 3px 4px; font-size: 11px; outline: none;
+  text-align: center;
+}
+.kf-row input[type=number]:focus { border-color: #6366f1; }
+.kf-row input.kf-time { color: #a5b4fc; }
+.kf-del {
+  width: 18px; height: 22px; padding: 0; line-height: 1;
+  background: rgba(255,80,80,0.12); border: 1px solid rgba(255,80,80,0.25);
+  border-radius: 4px; color: #f87171; font-size: 12px; cursor: pointer;
+  transition: background 0.15s;
+}
+.kf-del:hover { background: rgba(255,80,80,0.3); }
+#kf-list {
+  max-height: 150px; overflow-y: auto; margin-bottom: 6px;
+  scrollbar-width: thin; scrollbar-color: #333 transparent;
+}
+#kf-add-btn {
+  width: 100%; padding: 5px; margin-bottom: 4px;
+  background: rgba(99,102,241,0.1); border: 1px dashed rgba(99,102,241,0.35);
+  border-radius: 7px; color: #6366f1; font-size: 11px; cursor: pointer;
+  transition: background 0.15s;
+}
+#kf-add-btn:hover { background: rgba(99,102,241,0.22); }
 
 /* copy to sim */
 #sim-copy-btn {
