@@ -4,7 +4,8 @@
   "description": "3d 모델 테스트입니다.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "repository": {
     "type": "git",
@@ -13,12 +14,16 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/gwangminjun/3dModelTest/issues"
   },
   "homepage": "https://github.com/gwangminjun/3dModelTest#readme",
   "dependencies": {
     "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "jsdom": "^29.0.1",
+    "vitest": "^4.1.2"
   }
 }
