@@ -2,14 +2,14 @@
  * UIController.js
  *
  * 사용자 인터페이스(UI)와 3D 씬의 변형/날씨 시스템을 연결하는 컨트롤러 클래스.
- * 수동 제어(Manual)와 시뮬레이션(Simulation) 두 가지 탭을 관리하며,
+ * 수동 제어(Manual), 시뮬레이션(Simulation), 자동 노쇠화(Aging) 세 가지 탭을 관리하며,
  * 날씨/강도 설정, 수동 변형 수치 입력, 전체 리셋 기능을 담당한다.
  *
  * 주요 역할:
  * - 날씨 라디오 버튼 및 강도 슬라이더 이벤트 처리
  * - 수동 모드에서 균열/붕괴/침하/노화 수치 입력 처리
  * - 자동 모드(날씨 기반)에서 매 프레임 목표값으로 부드럽게 lerp
- * - 탭 전환 (수동 패널 ↔ 시뮬레이션 패널)
+ * - 탭 전환 (수동 / 시뮬레이션 / 자동 노쇠화 패널)
  * - 리셋 버튼: 모든 상태 초기화
  */
 
@@ -20,6 +20,7 @@ export class UIController {
    * @param {object} deps - 의존성 객체
    * @param {DeformManager} deps.deformManager - 변형 유니폼 제어
    * @param {SimulationController} deps.simController - 시뮬레이션 재생 제어
+   * @param {AgingController} deps.agingController - 자동 노쇠화 재생 제어
    * @param {WeatherController} deps.weatherController - 날씨 대기 제어
    * @param {ModelLoader} deps.modelLoader - 카메라 리셋용 모델 로더
    */
@@ -197,6 +198,10 @@ export class UIController {
     });
   }
 
+  /**
+   * 탭 이름에 해당하는 버튼을 활성화하고 나머지 패널을 숨긴다.
+   * @param {'manual'|'sim'|'aging'} name - 활성화할 탭 이름
+   */
   _setTab(name) {
     const tabs   = ['manual', 'sim', 'aging'];
     const panels = ['manual', 'sim', 'aging'];
