@@ -36,6 +36,7 @@ import { Minimap }              from './Minimap.js';
 import { ModelLoader }          from './ModelLoader.js';
 import { ParticleSystem }       from './ParticleSystem.js';
 import { WeatherController }    from './WeatherController.js';
+import { AgingController }      from './AgingController.js';
 import { SimulationController } from './SimulationController.js';
 import { UIController }         from './UIController.js';
 
@@ -51,7 +52,8 @@ const modelLoader      = new ModelLoader(scene, camera, controls, deformManager,
 const particleSystem   = new ParticleSystem(scene);                                     // 날씨 파티클 시스템
 const weatherController = new WeatherController(scene, ambient, sunLight);              // 대기 환경 제어
 const simController    = new SimulationController(deformManager);                       // 시뮬레이션 재생 제어
-const uiController     = new UIController({ deformManager, simController, weatherController, modelLoader, renderer, camera, controls }); // UI 이벤트 바인딩
+const agingCtrl    = new AgingController(deformManager);                                // 자동 노쇠화 제어
+const uiController     = new UIController({ deformManager, simController, agingController: agingCtrl, weatherController, modelLoader, renderer, camera, controls }); // UI 이벤트 바인딩
 
 // ── 렌더링 루프 ────────────────────────────────────────────────
 const clock = new THREE.Clock(); // 프레임 간 시간(dt) 측정용 클럭
@@ -76,6 +78,7 @@ const clock = new THREE.Clock(); // 프레임 간 시간(dt) 측정용 클럭
   // 시뮬레이션 재생 중이면 시뮬레이션 진행, 아니면 날씨 기반 자동 변형
   simController.tick(dt);
   if (!simController.playing && !simController.completed) {
+    agingCtrl.tick(dt);
     // 시뮬레이션이 비활성 상태일 때만 날씨 기반 자동 변형 실행
     uiController.tickAutoDeform(dt);
   }
