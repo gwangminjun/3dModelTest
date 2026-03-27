@@ -259,3 +259,92 @@ input[type=range] { width: 100%; accent-color: #6366f1; margin-top: 4px; cursor:
   pointer-events: auto; user-select: none;
 }
 #minimap-label:hover { color: rgba(160,185,255,1); }
+
+/* ── 자동 노쇠화 패널 ── */
+.aging-setting-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.aging-setting-label {
+  width: 65px; font-size: 12px; color: #aaa;
+}
+.aging-setting-row input[type=number] {
+  width: 60px; background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.13); border-radius: 6px;
+  color: #fff; padding: 3px 7px; font-size: 12px; outline: none; text-align: right;
+}
+.aging-setting-row input[type=number]:focus { border-color: #6366f1; }
+.aging-setting-unit { font-size: 10px; color: #444; }
+
+.aging-fx-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: #555; margin: 10px 0 6px;
+}
+.aging-fx-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 4px;
+}
+.aging-fx-grid label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: #999; cursor: pointer;
+}
+.aging-fx-grid label:has(input:checked) { color: #a5b4fc; }
+
+/* 배속 버튼 (aging 전용) */
+.aging-speed-btn {
+  flex: 1; padding: 4px 0; font-size: 11px; cursor: pointer;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 5px; color: #555;
+  transition: background 0.15s, color 0.15s;
+}
+.aging-speed-btn.active {
+  background: rgba(99,102,241,0.3);
+  border-color: rgba(99,102,241,0.5);
+  color: #e0e7ff; font-weight: 600;
+}
+
+/* 경과 연도 표시 */
+.aging-year-display {
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px; padding: 10px;
+  text-align: center; margin: 10px 0 8px;
+}
+.aging-year-label {
+  font-size: 10px; color: #555; text-transform: uppercase;
+  letter-spacing: 0.08em; margin-bottom: 4px;
+}
+.aging-year-value {
+  font-size: 22px; font-weight: 700; color: #7ee8a2; letter-spacing: 0.5px;
+}
+.aging-year-sep { font-size: 14px; color: #555; }
+.aging-year-unit { font-size: 13px; color: #666; }
+
+/* 재생 버튼 */
+#aging-play-btn {
+  flex: 2; padding: 7px;
+  background: rgba(99,102,241,0.2);
+  border: 1px solid rgba(99,102,241,0.4);
+  border-radius: 7px; color: #a5b4fc; font-size: 12px; cursor: pointer;
+  transition: background 0.15s;
+}
+#aging-play-btn:hover { background: rgba(99,102,241,0.35); }
+#aging-play-btn.playing {
+  background: rgba(74,222,128,0.2);
+  border-color: rgba(74,222,128,0.4);
+  color: #7ee8a2;
+}
+#aging-reset-btn {
+  flex: 1; padding: 7px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 7px; color: #666; font-size: 12px; cursor: pointer;
+  transition: background 0.15s;
+}
+#aging-reset-btn:hover { background: rgba(255,255,255,0.1); color: #999; }
+
+/* 노쇠화 진행 바 */
+#aging-progress-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #7ee8a2, #f0a04b);
+  border-radius: 3px; transition: width 0.1s linear;
+}
