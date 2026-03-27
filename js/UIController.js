@@ -23,9 +23,10 @@ export class UIController {
    * @param {WeatherController} deps.weatherController - 날씨 대기 제어
    * @param {ModelLoader} deps.modelLoader - 카메라 리셋용 모델 로더
    */
-  constructor({ deformManager, simController, weatherController, modelLoader, renderer, camera, controls }) {
+  constructor({ deformManager, simController, agingController, weatherController, modelLoader, renderer, camera, controls }) {
     this.dm       = deformManager;
     this.sim      = simController;
+    this.aging    = agingController;
     this.wc       = weatherController;
     this.ml       = modelLoader;
     this.renderer = renderer;
@@ -174,24 +175,37 @@ export class UIController {
   }
 
   /**
-   * 수동/시뮬레이션 탭 전환 이벤트를 등록한다.
-   * 수동 탭으로 전환 시 진행 중인 시뮬레이션을 일시정지한다.
+   * 수동/시뮬레이션/자동 노쇠화 탭 전환 이벤트를 등록한다.
+   * 수동 탭으로 전환 시 진행 중인 시뮬레이션과 노쇠화를 일시정지한다.
    */
   _bindTabs() {
-    // 수동(Manual) 탭 클릭
+    // 수동(Manual) 탭
     document.getElementById('tab-manual').addEventListener('click', () => {
-      document.getElementById('tab-manual').classList.add('active');
-      document.getElementById('tab-sim').classList.remove('active');
-      document.getElementById('panel-manual').style.display = ''; // 수동 패널 표시
-      document.getElementById('panel-sim').style.display    = 'none'; // 시뮬레이션 패널 숨김
-      this.sim.pause(); // 탭 전환 시 시뮬레이션 일시정지
+      this._setTab('manual');
+      this.sim.pause();
+      this.aging.pause();
     });
-    // 시뮬레이션(Simulation) 탭 클릭
+    // 시뮬레이션(Simulation) 탭
     document.getElementById('tab-sim').addEventListener('click', () => {
-      document.getElementById('tab-sim').classList.add('active');
-      document.getElementById('tab-manual').classList.remove('active');
-      document.getElementById('panel-sim').style.display    = ''; // 시뮬레이션 패널 표시
-      document.getElementById('panel-manual').style.display = 'none'; // 수동 패널 숨김
+      this._setTab('sim');
+      this.aging.pause();
+    });
+    // 자동 노쇠화(Aging) 탭
+    document.getElementById('tab-aging').addEventListener('click', () => {
+      this._setTab('aging');
+      this.sim.pause();
+    });
+  }
+
+  _setTab(name) {
+    const tabs   = ['manual', 'sim', 'aging'];
+    const panels = ['manual', 'sim', 'aging'];
+    tabs.forEach(t => {
+      document.getElementById(`tab-${t}`).classList.toggle('active', t === name);
+    });
+    panels.forEach(p => {
+      const el = document.getElementById(`panel-${p}`);
+      if (el) el.style.display = p === name ? '' : 'none';
     });
   }
 
@@ -225,6 +239,7 @@ export class UIController {
 
       this.dm.reset();         // 변형 유니폼 초기화
       this.sim.reset();        // 시뮬레이션 상태 초기화
+      this.aging.reset();      // 자동 노쇠화 상태 초기화
       this.ml.resetCamera();   // 카메라 위치 초기화
       localStorage.removeItem('damageSimState'); // 저장된 상태 삭제
     });
