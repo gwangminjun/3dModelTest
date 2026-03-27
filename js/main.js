@@ -14,7 +14,8 @@
  * 6. ParticleSystem   - 날씨 파티클 시스템 초기화
  * 7. WeatherController - 대기 환경 제어 초기화
  * 8. SimulationController - 시뮬레이션 재생 제어 초기화
- * 9. UIController     - UI 이벤트 바인딩
+ * 9. AgingController  - 자동 노쇠화 제어 초기화
+ * 10. UIController    - UI 이벤트 바인딩
  *
  * 렌더링 루프에서 매 프레임 수행하는 작업:
  * - 애니메이션 믹서 업데이트 (모델 내장 애니메이션)
@@ -78,7 +79,7 @@ const clock = new THREE.Clock(); // 프레임 간 시간(dt) 측정용 클럭
   // 시뮬레이션 재생 중이면 시뮬레이션 진행, 아니면 날씨 기반 자동 변형
   simController.tick(dt);
   if (!simController.playing && !simController.completed) {
-    agingCtrl.tick(dt);
+    agingCtrl.tick(dt);          // 자동 노쇠화 진행 (시뮬레이션 비활성 시)
     // 시뮬레이션이 비활성 상태일 때만 날씨 기반 자동 변형 실행
     uiController.tickAutoDeform(dt);
   }
