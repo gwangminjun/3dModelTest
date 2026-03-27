@@ -50,6 +50,7 @@
     <div class="mode-toggle">
       <button id="tab-manual" class="tab active">수동 변형</button>
       <button id="tab-sim"    class="tab">시뮬레이션</button>
+      <button id="tab-aging"  class="tab">자동 노쇠화</button>
     </div>
 
     <!-- 수동 변형 패널 -->
@@ -135,6 +136,65 @@
       <div class="sim-controls">
         <button id="sim-play-btn">▶ 재생</button>
         <button id="sim-reset-btn">↺ 리셋</button>
+      </div>
+    </div>
+
+    <!-- 자동 노쇠화 패널 -->
+    <div id="panel-aging" class="sec mode-panel" style="display:none;">
+      <div class="deform-hint">설정한 기간에 걸쳐 건물이 자동으로 노쇠화됩니다</div>
+
+      <!-- 설정 -->
+      <div class="aging-setting-row">
+        <span class="aging-setting-label">총 연도</span>
+        <input type="number" id="aging-total-years" value="100" min="1" max="9999" />
+        <span class="aging-setting-unit">년</span>
+      </div>
+      <div class="aging-setting-row">
+        <span class="aging-setting-label">재생 시간</span>
+        <input type="number" id="aging-duration" value="30" min="1" max="3600" />
+        <span class="aging-setting-unit">초</span>
+      </div>
+
+      <!-- 효과 선택 -->
+      <div class="aging-fx-title">자동 진행 효과</div>
+      <div class="aging-fx-grid">
+        <label><input type="checkbox" id="aging-fx-crack"    checked /> 균열</label>
+        <label><input type="checkbox" id="aging-fx-collapse" checked /> 붕괴</label>
+        <label><input type="checkbox" id="aging-fx-sink"     checked /> 침하</label>
+        <label><input type="checkbox" id="aging-fx-age"      checked /> 노화</label>
+      </div>
+
+      <!-- 배속 -->
+      <div class="sim-row" style="margin-top:10px;">
+        <span class="sim-label">배속</span>
+        <div class="speed-btns">
+          <button class="aging-speed-btn" data-speed="0.5">0.5x</button>
+          <button class="aging-speed-btn active" data-speed="1">1x</button>
+          <button class="aging-speed-btn" data-speed="2">2x</button>
+          <button class="aging-speed-btn" data-speed="4">4x</button>
+        </div>
+      </div>
+
+      <!-- 경과 연도 표시 -->
+      <div class="aging-year-display">
+        <div class="aging-year-label">경과 연도</div>
+        <div class="aging-year-value">
+          <span id="aging-year-cur">0</span>
+          <span class="aging-year-sep"> / </span>
+          <span id="aging-year-total">100</span>
+          <span class="aging-year-unit">년</span>
+        </div>
+      </div>
+
+      <!-- 진행 바 -->
+      <div class="sim-progress-wrap">
+        <div id="aging-progress-bar"></div>
+      </div>
+
+      <!-- 재생 컨트롤 -->
+      <div class="sim-controls">
+        <button id="aging-play-btn">▶ 재생</button>
+        <button id="aging-reset-btn">↺ 리셋</button>
       </div>
     </div>
 
